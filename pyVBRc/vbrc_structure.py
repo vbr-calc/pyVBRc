@@ -1,5 +1,5 @@
 from pathlib import PosixPath
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 from scipy.interpolate import RegularGridInterpolator
 from scipy.io import loadmat
@@ -9,7 +9,7 @@ import numpy as np
 class VBRCstruct:
     def __init__(
         self,
-        filename: str | PosixPath,
+        filename: Union[str, PosixPath],
         vbr_name: str = "VBR",
         lut_dimensions: List[str] = None,
     ):
@@ -61,9 +61,9 @@ class VBRCstruct:
         data_field: Tuple[str],
         i_frequency: int = None,
         log_vars: List[str] = None,
-        method: str | None = "linear",
-        bounds_error: bool | None = True,
-        fill_value: float | None = np.nan,
+        method: Union[str,None] = "linear",
+        bounds_error: Union[bool,  None] = True,
+        fill_value: Union[float, None] = np.nan,
     ) -> RegularGridInterpolator:
         """
 
