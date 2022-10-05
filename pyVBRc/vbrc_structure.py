@@ -7,10 +7,12 @@ import numpy as np
 
 
 class VBRCstruct:
-    def __init__(self,
-                 filename: str | PosixPath,
-                 vbr_name:str ="VBR",
-                 lut_dimensions: List[str]=None):
+    def __init__(
+        self,
+        filename: str | PosixPath,
+        vbr_name: str = "VBR",
+        lut_dimensions: List[str] = None,
+    ):
         """
         A data class to load a VBRc structure saved by the VBRc
 
@@ -28,13 +30,14 @@ class VBRCstruct:
 
         self.filename = filename
 
-        raw_data = loadmat(filename,
-                           uint16_codec='ascii', # why this?
-                           struct_as_record=False,
-                           squeeze_me=True,
-                           )
-        self.input = getattr(raw_data[vbr_name], 'in')
-        self.output = getattr(raw_data[vbr_name], 'out')
+        raw_data = loadmat(
+            filename,
+            uint16_codec="ascii",  # why this?
+            struct_as_record=False,
+            squeeze_me=True,
+        )
+        self.input = getattr(raw_data[vbr_name], "in")
+        self.output = getattr(raw_data[vbr_name], "out")
 
         self.lut_dimensions = None
         if lut_dimensions is not None:
@@ -48,18 +51,20 @@ class VBRCstruct:
         if nstate_dim != ndims:
             raise ValueError(
                 f"the number of fields in lut_dimensions ({ndims}) must match"
-                f"the dimensionality of the state variables ({nstate_dim})")
+                f"the dimensionality of the state variables ({nstate_dim})"
+            )
 
         self.lut_dimensions = lut_dimensions
 
-    def interpolator(self,
-                     data_field: Tuple[str],
-                     i_frequency: int = None,
-                     log_vars: List[str] = None,
-                     method: str | None = "linear",
-                     bounds_error: bool | None = True,
-                     fill_value: float | None = np.nan,
-                     ) -> RegularGridInterpolator:
+    def interpolator(
+        self,
+        data_field: Tuple[str],
+        i_frequency: int = None,
+        log_vars: List[str] = None,
+        method: str | None = "linear",
+        bounds_error: bool | None = True,
+        fill_value: float | None = np.nan,
+    ) -> RegularGridInterpolator:
         """
 
         Parameters
@@ -94,7 +99,9 @@ class VBRCstruct:
             log_vars = []
 
         if self.lut_dimensions is None:
-            raise RuntimeError("Please call set_lut_dimensions prior to building an interpolator.")
+            raise RuntimeError(
+                "Please call set_lut_dimensions prior to building an interpolator."
+            )
 
         data = self.output
         for df in data_field:
@@ -106,14 +113,18 @@ class VBRCstruct:
         if data.ndim - len(self.lut_dimensions) == 1:
             # frequency dependent
             if i_frequency is None:
-                raise ValueError(f"must supply a frequency dimension for frequency dependent field {data_field}")
+                raise ValueError(
+                    f"must supply a frequency dimension for frequency dependent field {data_field}"
+                )
             data = data[..., i_frequency]
 
         if data_field[-1] in log_vars:
             data = np.log10(data)
 
         pts = self._get_lut_dimensions(log_vars)
-        return RegularGridInterpolator(pts, data, method=method, bounds_error=bounds_error, fill_value=fill_value)
+        return RegularGridInterpolator(
+            pts, data, method=method, bounds_error=bounds_error, fill_value=fill_value
+        )
 
     def _get_lut_dimensions(self, log_vars: list[str] = None) -> List[np.ndarray]:
         # extract the look up table dimension arrays, taking the log if necessary
