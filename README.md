@@ -4,6 +4,18 @@ pyVBRc is a python package for working with output from the [Very Broadband Rheo
 
 ## installation
 
+
+(not working yet)
+```
+pip install pyVBRc
+```
+
+Currently working:
+
+```
+pip install git+https://github.com/chrishavlin/pyVBRc
+```
+
 ## usage
 
 As of now, you can use `pyVBRc` to:
@@ -101,4 +113,12 @@ which yields
 ![](https://raw.githubusercontent.com/chrishavlin/pyVBRc/main/examples/interpolate_example.png)
 
 
-**NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built. 
+**NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
+
+## Getting help
+
+## Contributing
+### installing from source
+### running the test suite
+
+
