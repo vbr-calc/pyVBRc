@@ -65,7 +65,7 @@ file = get_sample_filename("VBRc_sample_LUT.mat")
 vbr = VBRCstruct(file, lut_dimensions=["T_K", "phi", "dg_um"])
 ```
 
-Now, you can build a grid interpolator for a single method and a single frequency index with the `interpolator` method. This method also accepts the `log_vars` keyword argument that you can use to specify LUT fields that you want to interpolate in log-space:
+Now, you can build a grid interpolator for a single method-array and a single frequency index with the `interpolator` method. This method also accepts the `log_vars` keyword argument that you can use to specify LUT fields that you want to interpolate in log-space:
 
 ```python
 import numpy as np
@@ -82,7 +82,7 @@ print(Vs_interp)
 
 ```
 
-To interpolate at more than one point, you can provide an array of points:
+Note that the array to interpolate is specified as a tuple of output fieldnames: `("anelastic", "andrade_psp", "V")` corresponds to accessing `VBR.output.anelastic.andrade_psp.V`. To interpolate at more than one point, you can provide an array of points:
 
 ```python
 import matplotlib.pyplot as plt
