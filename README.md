@@ -13,7 +13,7 @@ pip install pyVBRc
 Currently working:
 
 ```
-pip install git+https://github.com/chrishavlin/pyVBRc
+pip install git+https://github.com/vbr-calc/pyVBRc
 ```
 
 ## usage
@@ -51,7 +51,7 @@ plt.ylabel("Q^{-1}, andrade pseudo-period")
 plt.show()
 ```
 
-![](https://raw.githubusercontent.com/chrishavlin/pyVBRc/main/examples/andrade_psp_T_dep.png)
+![](https://raw.githubusercontent.com/vbr-calc/pyVBRc/main/examples/andrade_psp_T_dep.png)
 
 ## interpolating
 
@@ -110,7 +110,7 @@ plt.show()
 
 which yields
 
-![](https://raw.githubusercontent.com/chrishavlin/pyVBRc/main/examples/interpolate_example.png)
+![](https://raw.githubusercontent.com/vbr-calc/pyVBRc/main/examples/interpolate_example.png)
 
 
 **NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
