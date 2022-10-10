@@ -1,7 +1,7 @@
 function VBR = generate_sample_vbr_struct_file(output_dir)
-    # generates and saves a VBRc run to use as a lookup table.
-    # varies T, phi, dg_um (see genSVranges in this file for full settings) at
-    # two frequencies.
+    % generates and saves a VBRc run to use as a lookup table.
+    % varies T, phi, dg_um (see genSVranges in this file for full settings) at
+    % two frequencies.
     path_to_top_level_vbr = getenv("vbrdir");
     addpath(path_to_top_level_vbr)
     vbr_init
