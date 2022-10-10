@@ -96,4 +96,9 @@ plt.ylabel("Vs [m/s]")
 plt.show()
 ```
 
+which yields
+
 ![](https://raw.githubusercontent.com/chrishavlin/pyVBRc/main/examples/interpolate_example.png)
+
+
+**NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built. 
