@@ -61,8 +61,8 @@ class VBRCstruct:
         data_field: Tuple[str],
         i_frequency: int = None,
         log_vars: List[str] = None,
-        method: Union[str,None] = "linear",
-        bounds_error: Union[bool,  None] = True,
+        method: Union[str, None] = "linear",
+        bounds_error: Union[bool, None] = True,
         fill_value: Union[float, None] = np.nan,
     ) -> RegularGridInterpolator:
         """
