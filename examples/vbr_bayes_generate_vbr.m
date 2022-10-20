@@ -89,7 +89,7 @@ function VBR = runVBR(SVs,VBRsettings);
   VBR.in.anelastic.methods_list=VBRsettings.ane_meths;
   VBR.in.elastic.anharmonic=Params_Elastic('anharmonic'); % unrelaxed elasticity
   VBR.in.elastic.anharmonic.Gu_0_ol = 75.5; % olivine reference shear modulus [GPa]
-  VBR.in.GlobalSettings.melt_enhancement=1
+  VBR.in.GlobalSettings.melt_enhancement=1;
   VBR.in.SV=SVs;
   VBR.in.SV.f=VBRsettings.freqs;
   disp('Calculating material properties....')
