@@ -1,5 +1,6 @@
 """Console script for pyVBRc."""
 import sys
+
 import click
 
 

@@ -2,7 +2,7 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -27,7 +27,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
-    description="python utilities for working with VBRc matlab output",
+    description="python utilities for working with the VBRc",
     entry_points={
         "console_scripts": [
             "pyVBRc=pyVBRc.cli:main",
@@ -35,7 +35,8 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description=readme,
+    long_description="python utilities for working with the Very Broadband "
+    "Rheology Calculator, see https://github.com/chrishavlin/pyVBRc",
     include_package_data=True,
     package_data={"": ["sample_data/*.mat"]},
     keywords="pyVBRc",

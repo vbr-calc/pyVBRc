@@ -1,0 +1,25 @@
+# https://github.com/actions/create-release
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      steps:
+        - uses: actions/checkout@v2
+        - uses: ncipollo/release-action@v1
+          with:
+            bodyFile: "release_notes.md"
+            draft: false
+            token: ${{ secrets.YOUR_GITHUB_TOKEN }}
+            tag: ${{ github.ref }}
+            prerelease: false
+            name: Release ${{ github.ref }}

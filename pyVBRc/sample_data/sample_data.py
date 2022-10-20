@@ -1,8 +1,9 @@
+import os
+from importlib import resources
 from pathlib import PosixPath
 from typing import List, Optional
-from importlib import resources
+
 from pyVBRc.vbrc_structure import VBRCstruct
-import os
 
 
 def load_sample_structure(

@@ -1,9 +1,9 @@
 from pathlib import PosixPath
 from typing import List, Tuple, Union
 
+import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from scipy.io import loadmat
-import numpy as np
 
 
 class VBRCstruct:
@@ -113,9 +113,11 @@ class VBRCstruct:
         if data.ndim - len(self.lut_dimensions) == 1:
             # frequency dependent
             if i_frequency is None:
-                raise ValueError(
-                    f"must supply a frequency dimension for frequency dependent field {data_field}"
+                msg = (
+                    f"must supply a frequency dimension for frequency "
+                    f"dependent field {data_field}"
                 )
+                raise ValueError(msg)
             data = data[..., i_frequency]
 
         if data_field[-1] in log_vars:
