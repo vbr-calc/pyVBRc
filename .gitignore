@@ -1,3 +1,7 @@
+# dont commit example output files
+examples/*.mat
+examples/*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

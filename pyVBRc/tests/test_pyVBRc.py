@@ -1,7 +1,9 @@
-from pyVBRc.vbrc_structure import VBRCstruct
+import os
+
 import numpy as np
 import pytest
-import os
+
+from pyVBRc.vbrc_structure import VBRCstruct
 
 _VBRfiles = [
     "VBRc_sample_LUT.mat",
