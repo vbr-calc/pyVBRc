@@ -43,18 +43,8 @@ function [SVs] = genSVranges()
     N.(flds{ifld})=numel(Ranges.(flds{ifld}));
   end
 
-  % build SVs for each var (vectorize this)
-  flds=fieldnames(Ranges);
-  SVs.T_K = zeros(N.T_K, N.phi, N.dg_um);
-  SVs.phi = zeros(N.T_K, N.phi, N.dg_um);
-  SVS.dg_um = zeros(N.T_K, N.phi, N.dg_um);
-  for iT = 1:N.T_K
-      for iphi = 1:N.phi
-          SVs.T_K(iT, iphi, :) = Ranges.T_K(iT);
-          SVs.phi(iT, iphi, :) = Ranges.phi(iphi);
-          SVs.dg_um(iT, iphi, :) = Ranges.dg_um;
-      end
-  end
+  % build SVs for each var
+  [SVs.T_K, SVs.phi, SVs.dg_um] = ndgrid(Ranges.T_K, Ranges.phi, Ranges.dg_um);
 
   % fill in the other constants
   flds=fieldnames(Constants);
