@@ -36,7 +36,7 @@ setup(
     install_requires=requirements,
     license="MIT license",
     long_description="python utilities for working with the Very Broadband "
-    "Rheology Calculator, see https://github.com/chrishavlin/pyVBRc",
+    "Rheology Calculator, see https://github.com/vbr-project/pyVBRc",
     include_package_data=True,
     package_data={"": ["sample_data/*.mat"]},
     keywords="pyVBRc",
@@ -44,7 +44,7 @@ setup(
     packages=find_packages(include=["pyVBRc", "pyVBRc.*"]),
     test_suite="tests",
     tests_require=test_requirements,
-    url="https://github.com/chrishavlin/pyVBRc",
+    url="https://github.com/vbr-project/pyVBRc",
     version="0.1.0",
     zip_safe=False,
 )
