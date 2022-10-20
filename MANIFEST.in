@@ -1,6 +1,5 @@
-include HISTORY.yaml
 include LICENSE
-include README.md
+include *.md
 recursive-include . *.cfg
 recursive-include . *.yaml
 include .editorconfig
