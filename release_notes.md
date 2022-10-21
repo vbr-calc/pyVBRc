@@ -1,8 +1,6 @@
-# v0.1.1
+# v0.1.2
 
-Initial release of pyVBRc, still experimental
+... summary ...
 
 ## New Features
 
-* python interace for VBRc .mat files
-* basic examples
