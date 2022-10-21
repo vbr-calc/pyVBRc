@@ -4,16 +4,16 @@ pyVBRc is a python package for working with output from the [Very Broadband Rheo
 
 ## installation
 
+To install the latest release:
 
-(not working yet)
 ```
 pip install pyVBRc
 ```
 
-Currently working:
+To install the latest development version, fork and clone this repository then run 
 
 ```
-pip install git+https://github.com/vbr-calc/pyVBRc
+pip install .
 ```
 
 ## usage
