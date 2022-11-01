@@ -5,6 +5,7 @@ import numpy as np
 from packaging.version import Version
 from scipy.interpolate import RegularGridInterpolator
 from scipy.io import loadmat
+from unyt import unyt_array
 
 
 class VBRCstruct:
@@ -13,6 +14,7 @@ class VBRCstruct:
         filename: Union[str, PosixPath],
         vbr_name: str = "VBR",
         lut_dimensions: List[str] = None,
+        attach_units: bool = True,
     ):
         """
         A data class to load a VBRc structure saved by the VBRc
@@ -27,6 +29,9 @@ class VBRCstruct:
             the look-up table (lut) dimensions. The variables listed here
             are taken to be the primary state variable dimensions. Used
             when constructing interpolaters.
+        attach_units: bool = True
+            if True (default), will attempt a recursive walk through the VBRc
+            structure and convert the arrays to unyt arrays.
         """
 
         self.filename = filename
@@ -47,6 +52,36 @@ class VBRCstruct:
         self.lut_dimensions = None
         if lut_dimensions is not None:
             self.set_lut_dimensions(lut_dimensions)
+
+        if attach_units and self.vbrc_version >= Version("1.0.0"):
+            self._attach_units()
+
+    def _attach_units(self):
+
+        if hasattr(self.input, "sv_metadata") is False:
+            raise RuntimeError("VBRc structure is missing 'sv_metadata' field.")
+
+        # first the inputs
+        for field in self.input.SV._fieldnames:
+            units = getattr(self.input.sv_metadata, field, "")
+            vals = getattr(self.input.SV, field)
+            if isinstance(units, np.ndarray) and len(units) == 0:
+                units = ""
+            new = unyt_array(vals, units)
+            setattr(self.input.SV, field, new)
+
+        # now the outputs
+        if hasattr(self.output, "anelastic"):
+            for meth in self.output.anelastic._fieldnames:
+                methstruct = getattr(self.output.anelastic, meth)
+                for field in methstruct._fieldnames:
+                    units = getattr(methstruct.units, field, "")
+                    if isinstance(units, np.ndarray) and len(units) == 0:
+                        units = ""
+                    vals = getattr(methstruct, field)
+                    new = unyt_array(vals, units)
+                    setattr(methstruct, field, new)
+                setattr(self.output.anelastic, meth, methstruct)
 
     def set_lut_dimensions(self, lut_dimensions: List[str]):
         # check that number of dimensions equals number of dimensions
