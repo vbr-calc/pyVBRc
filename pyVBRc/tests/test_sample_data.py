@@ -35,3 +35,8 @@ def test_get_sample_filename():
 def test_version():
     vbr = sd.load_sample_structure("VBRc_sample_LUT_v1pt0pt0.mat")
     assert vbr.vbrc_version == Version("1.0.0")
+
+
+def test_missing_version():
+    vbr = sd.load_sample_structure("VBRc_sample_LUT_R2021a.mat")
+    assert vbr.vbrc_version is None
