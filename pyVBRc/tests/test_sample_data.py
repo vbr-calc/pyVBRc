@@ -1,12 +1,14 @@
 import os
 
 import pytest
+from packaging.version import Version
 
 import pyVBRc.sample_data as sd
 
 _VBRfiles = [
     "VBRc_sample_LUT.mat",
     "VBRc_sample_LUT_R2021a.mat",
+    "VBRc_sample_LUT_v1pt0pt0.mat",
 ]
 
 
@@ -28,3 +30,13 @@ def test_get_sample_filename():
     for f in _VBRfiles:
         fullfi = sd.get_sample_filename(f)
         assert os.path.isfile(fullfi)
+
+
+def test_version():
+    vbr = sd.load_sample_structure("VBRc_sample_LUT_v1pt0pt0.mat")
+    assert vbr.vbrc_version == Version("1.0.0")
+
+
+def test_missing_version():
+    vbr = sd.load_sample_structure("VBRc_sample_LUT_R2021a.mat")
+    assert vbr.vbrc_version is None
