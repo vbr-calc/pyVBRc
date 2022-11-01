@@ -2,6 +2,7 @@ from pathlib import PosixPath
 from typing import List, Tuple, Union
 
 import numpy as np
+from packaging.version import Version
 from scipy.interpolate import RegularGridInterpolator
 from scipy.io import loadmat
 
@@ -38,6 +39,10 @@ class VBRCstruct:
         )
         self.input = getattr(raw_data[vbr_name], "in")
         self.output = getattr(raw_data[vbr_name], "out")
+        vbrc_raw_version = getattr(raw_data[vbr_name], "version_used", None)
+        self.vbrc_version = None
+        if vbrc_raw_version:
+            self.vbrc_version = Version(vbrc_raw_version.version)
 
         self.lut_dimensions = None
         if lut_dimensions is not None:

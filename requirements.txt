@@ -2,3 +2,4 @@ numpy
 scipy
 matplotlib
 Click>=7.0
+packaging
