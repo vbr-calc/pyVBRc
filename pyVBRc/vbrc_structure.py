@@ -8,6 +8,7 @@ from scipy.io import loadmat
 from unyt import unyt_array
 from unyt.unit_object import UnitParseError
 
+
 class VBRCstruct:
     def __init__(
         self,
@@ -190,8 +191,10 @@ def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
                     try:
                         new = unyt_array(field_value, units)
                     except UnitParseError:
-                        print(f"Warning: {field} in {struct_name} has "
-                              f"unsupported units ({units}), using nondimensional")
+                        print(
+                            f"Warning: {field} in {struct_name} has "
+                            f"unsupported units ({units}), using nondimensional"
+                        )
                         new = unyt_array(field_value, "")
                     setattr(vbrc_sub_struct, field, new)
             elif hasattr(field_value, "_fieldnames"):
