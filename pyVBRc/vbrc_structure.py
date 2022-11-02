@@ -53,7 +53,7 @@ class VBRCstruct:
         if lut_dimensions is not None:
             self.set_lut_dimensions(lut_dimensions)
 
-        if attach_units and self.vbrc_version >= Version("1.0.0"):
+        if attach_units and self.vbrc_version and self.vbrc_version >= Version("1.0.0"):
             self._attach_units()
 
     def _attach_units(self):
