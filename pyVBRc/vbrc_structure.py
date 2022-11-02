@@ -6,7 +6,7 @@ from packaging.version import Version
 from scipy.interpolate import RegularGridInterpolator
 from scipy.io import loadmat
 from unyt import unyt_array
-
+from unyt.unit_object import UnitParseError
 
 class VBRCstruct:
     def __init__(
@@ -58,30 +58,11 @@ class VBRCstruct:
 
     def _attach_units(self):
 
-        if hasattr(self.input, "sv_metadata") is False:
-            raise RuntimeError("VBRc structure is missing 'sv_metadata' field.")
-
         # first the inputs
-        for field in self.input.SV._fieldnames:
-            units = getattr(self.input.sv_metadata, field, "")
-            vals = getattr(self.input.SV, field)
-            if isinstance(units, np.ndarray) and len(units) == 0:
-                units = ""
-            new = unyt_array(vals, units)
-            setattr(self.input.SV, field, new)
+        self.input = _recursive_unitfication(self.input, "input")
 
         # now the outputs
-        if hasattr(self.output, "anelastic"):
-            for meth in self.output.anelastic._fieldnames:
-                methstruct = getattr(self.output.anelastic, meth)
-                for field in methstruct._fieldnames:
-                    units = getattr(methstruct.units, field, "")
-                    if isinstance(units, np.ndarray) and len(units) == 0:
-                        units = ""
-                    vals = getattr(methstruct, field)
-                    new = unyt_array(vals, units)
-                    setattr(methstruct, field, new)
-                setattr(self.output.anelastic, meth, methstruct)
+        self.output = _recursive_unitfication(self.output, "output")
 
     def set_lut_dimensions(self, lut_dimensions: List[str]):
         # check that number of dimensions equals number of dimensions
@@ -190,3 +171,32 @@ class VBRCstruct:
                 pts = np.log10(pts)
             points.append(pts)
         return points
+
+
+def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
+    # recursively walks a VBRc structure, replacing all arrays with unyt arrays
+    # if there is a units field at the same level as the arrays in the structure.
+    if hasattr(vbrc_sub_struct, "_fieldnames"):
+        for field in vbrc_sub_struct._fieldnames:
+            field_value = getattr(vbrc_sub_struct, field)
+            if isinstance(field_value, np.ndarray):
+                # it is an array! check if units are known
+                if hasattr(vbrc_sub_struct, "units"):
+                    if hasattr(vbrc_sub_struct.units, field) is False:
+                        print(f"Warning: {field} in {struct_name} has no units")
+                    units = getattr(vbrc_sub_struct.units, field, "")
+                    if isinstance(units, np.ndarray) and len(units) == 0:
+                        units = ""
+                    try:
+                        new = unyt_array(field_value, units)
+                    except UnitParseError:
+                        print(f"Warning: {field} in {struct_name} has "
+                              f"unsupported units ({units}), using nondimensional")
+                        new = unyt_array(field_value, "")
+                    setattr(vbrc_sub_struct, field, new)
+            elif hasattr(field_value, "_fieldnames"):
+                # need to go deeper
+                new_value = _recursive_unitfication(field_value, field)
+                setattr(vbrc_sub_struct, field, new_value)
+
+    return vbrc_sub_struct

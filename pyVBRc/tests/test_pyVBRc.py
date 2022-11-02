@@ -2,12 +2,14 @@ import os
 
 import numpy as np
 import pytest
+from unyt import unyt_array
 
 from pyVBRc.vbrc_structure import VBRCstruct
 
 _VBRfiles = [
     "VBRc_sample_LUT.mat",
     "VBRc_sample_LUT_R2021a.mat",
+    "VBRc_sample_LUT_v1pt0pt0.mat",
 ]
 
 
@@ -48,3 +50,15 @@ def test_interpolator(fname):
     targets = np.column_stack((T_targets, phi_targets, dg_targets))
     Vs_interp = interp(targets)
     assert len(Vs_interp) == nT * 2
+
+
+def test_units():
+    sample_file = "pyVBRc/sample_data/VBRc_sample_LUT_v1pt0pt0.mat"
+
+    vbr = VBRCstruct(sample_file)
+    assert isinstance(vbr.input.SV.T_K, unyt_array)
+    assert isinstance(vbr.output.elastic.anh_poro.Gu, unyt_array)
+    assert isinstance(vbr.output.anelastic.eburgers_psp.Q, unyt_array)
+
+    vbr = VBRCstruct(sample_file, attach_units=False)
+    assert isinstance(vbr.input.SV.T_K, unyt_array) is False
