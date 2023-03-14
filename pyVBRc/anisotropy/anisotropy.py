@@ -183,7 +183,7 @@ class AlignedInclusions(AnisotropicMedium):
         )
         S[3311] = S[2211]
 
-        S[1122] = (1 - 2 * nu0 + 1 / al2m1) / (2 * nu0m1) + (
+        S[1122] = -(1 - 2 * nu0 + 1 / al2m1) / (2 * nu0m1) + (
             1 - 2 * nu0 + 3 / (2 * al2m1)
         ) * g / (2 * nu0m1)
         S[1133] = S[1122]
@@ -296,11 +296,6 @@ class AlignedInclusions(AnisotropicMedium):
         inclusion_material: IsotropicMedium,
         vol_fraction: float,
     ):
-
-        if np.any(self.aspect_ratio > 1):
-            raise NotImplementedError(
-                "effective_youngs_modulus is only valid for aspect ratios <= 1."
-            )
 
         A_i = self._A_coefficients(matrix_material, inclusion_material, vol_fraction)
         c = vol_fraction
