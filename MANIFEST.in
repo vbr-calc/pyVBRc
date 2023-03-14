@@ -4,9 +4,9 @@ recursive-include . *.cfg
 recursive-include . *.yaml
 include .editorconfig
 include *.sh
+exclude .flake8
 include *.txt
 include Makefile
-include tox.ini
 
 recursive-include * *.m
 recursive-exclude * __pycache__
