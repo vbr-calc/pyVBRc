@@ -1,14 +1,17 @@
+default_language_version:
+    python: python3.10
+
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 22.8.0  # black
+    rev: 22.8.0  
     hooks:
     - id: black
       language_version: python3
 -   repo: https://github.com/timothycrosley/isort
-    rev: '5.6.4'  # isort
+    rev: '5.12.0' 
     hooks:
     -   id: isort
--   repo: https://gitlab.com/pycqa/flake8
-    rev: '3.8.1'  # flake8
+-   repo: https://github.com/PyCQA/flake8
+    rev: '6.0.0' 
     hooks:
     -   id: flake8
