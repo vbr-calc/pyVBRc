@@ -1,13 +1,17 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Union
 
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy.optimize import fsolve
 
+from pyVBRc.anisotropy._stiffness import TransverseIsotropicStiffness
+
 
 class IsotropicMedium:
-    def __init__(self, poisson_ratio: float, modulus: float, modulus_type: str):
+    def __init__(
+        self, poisson_ratio: float, modulus: float, modulus_type: str, density=None
+    ):
         self.poisson_ratio = poisson_ratio
 
         if modulus_type == "shear":
@@ -19,6 +23,8 @@ class IsotropicMedium:
             self._bulk_modulus = modulus
             mu = 3 * modulus * (1 - 2 * poisson_ratio) / (2 * (1 + poisson_ratio))
             self.shear_modulus = mu
+
+        self.density = density
 
     _bulk_modulus = None
 
@@ -61,13 +67,17 @@ class IsotropicMedium:
         return self._pwave_M
 
 
-class AnisotropicMedium(ABC):
+class _AnisotropicMedium(ABC):
 
     model_name: str = None
     model_reference: dict = None
 
+    @abstractmethod
+    def get_stiffness_matrix(self):
+        pass
 
-class AlignedInclusions(AnisotropicMedium):
+
+class AlignedInclusions(_AnisotropicMedium):
 
     model_name = "AlignedInclusions"
     model_reference = dict(
@@ -103,6 +113,45 @@ class AlignedInclusions(AnisotropicMedium):
             )
 
         self.aspect_ratio = aspect_ratio
+        self.matrix_material: IsotropicMedium = None
+        self.inclusion_material: IsotropicMedium = None
+        self.volume_fraction: ArrayLike = None
+        self.composite_density: ArrayLike = None
+
+    def set_material(
+        self,
+        matrix_material: IsotropicMedium,
+        inclusion_material: IsotropicMedium,
+        vol_fraction: ArrayLike,
+    ):
+
+        self.matrix_material = matrix_material
+        self.inclusion_material = inclusion_material
+        self.volume_fraction = vol_fraction
+
+        d_matrix = matrix_material.density
+        d_includ = inclusion_material.density
+        if d_matrix is not None and d_includ is not None:
+            self.composite_density = (
+                vol_fraction * d_includ + (1 - vol_fraction) * d_matrix
+            )
+        else:
+            self.composite_density = None
+
+    def _require_material(self, func: str):
+        if any(
+            [
+                attr is None
+                for attr in (
+                    self.matrix_material,
+                    self.inclusion_material,
+                    self.volume_fraction,
+                )
+            ]
+        ):
+            raise RuntimeError(
+                f"You must set the material properties with `.set_material` before calling {func}"
+            )
 
     def _disc_g(self):
         alpha = self.aspect_ratio
@@ -145,15 +194,15 @@ class AlignedInclusions(AnisotropicMedium):
 
     def _eshelby_disc_fiber(self, poisson_0: float):
         if self.inclusion_type == "discs":
-            print("getting disc g")
+            # print("getting disc g")
             g = self._disc_g()
         elif self.inclusion_type == "fibers":
-            print("getting fiber g")
+            # print("getting fiber g")
             g = self._fiber_g()
         else:
             raise RuntimeError(f"Unexpected inclusion_type: {self.inclusion_type}.")
 
-        print("getting eshelby tensor entries")
+        # print("getting eshelby tensor entries")
         S = self._empty_eshelby()
         nu0 = poisson_0
         al = self.aspect_ratio
@@ -204,42 +253,48 @@ class AlignedInclusions(AnisotropicMedium):
 
         return S
 
-    def _eshelby_tensor(self, poisson_0: float):
+    @property
+    def _eshelby_tensor(self):
         # Sijkl
+        poisson_0 = self.matrix_material.poisson_ratio
         if self.inclusion_type == "spheres":
             return self._eshelby_spherical(poisson_0)
         else:
             return self._eshelby_disc_fiber(poisson_0)
 
-    def effective_shear_modulus(
-        self,
-        matrix_material: IsotropicMedium,
-        inclusion_material: IsotropicMedium,
-        vol_fraction: float,
-    ):
-        S = self._eshelby_tensor(matrix_material.poisson_ratio)
+    def _shear_moduli(self):
+        S = self._eshelby_tensor
 
         # in-plane
-        mu0 = matrix_material.shear_modulus
-        mu1 = inclusion_material.shear_modulus
-        c = vol_fraction
+        mu0 = self.matrix_material.shear_modulus
+        mu1 = self.inclusion_material.shear_modulus
+        c = self.volume_fraction
         mu_12 = (1 + c / (mu0 / (mu1 - mu0) + 2 * (1 - c) * S[1212])) * mu0
 
         # out-plane
         mu_23 = (1 + c / (mu0 / (mu1 - mu0) + 2 * (1 - c) * S[2323])) * mu0
 
+        if isinstance(mu_12, np.ndarray) is False:
+            mu_12 = np.array(
+                [
+                    mu_12,
+                ]
+            )
+            mu_23 = np.array(
+                [
+                    mu_23,
+                ]
+            )
         return mu_12, mu_23
 
     def _D_values(
         self,
-        matrix_material: IsotropicMedium,
-        inclusion_material: IsotropicMedium,
     ):
-        lam0 = matrix_material.lame_first_parameter
-        lam1 = inclusion_material.lame_first_parameter
+        lam0 = self.matrix_material.lame_first_parameter
+        lam1 = self.inclusion_material.lame_first_parameter
         dlam = lam1 - lam0
-        mu0 = matrix_material.shear_modulus
-        mu1 = inclusion_material.shear_modulus
+        mu0 = self.matrix_material.shear_modulus
+        mu1 = self.inclusion_material.shear_modulus
 
         D1 = 1.0 + 2.0 * (mu1 - mu0) / dlam
         D2 = (lam0 + 2.0 * mu0) / dlam
@@ -248,35 +303,27 @@ class AlignedInclusions(AnisotropicMedium):
 
     def _B_values(
         self,
-        matrix_material: IsotropicMedium,
         D1,
         D2,
         D3,
-        vol_fraction: Union[ArrayLike, float],
     ):
 
-        S = self._eshelby_tensor(matrix_material.poisson_ratio)
-        c = vol_fraction
+        S = self._eshelby_tensor
+        c = self.volume_fraction
         B1 = c * D1 + D2 + (1.0 - c) * (D1 * S[1111] + 2 * S[2211])
         B2 = c + D3 + (1.0 - c) * (D1 * S[1122] + S[2222] + S[2233])
         B3 = c + D3 + (1.0 - c) * (S[1111] + (1 + D1) * S[2211])
         B4 = c * D1 + D2 + (1.0 - c) * (S[1122] + D1 * S[2222] + S[2233])
         B5 = c + D3 + (1.0 - c) * (S[1122] + S[2222] + D1 * S[2233])
 
-        # A_first = 2. * B2 * B3
-        # A_sub = B1 * (B4 + B5)
-        # A = A_first - A_sub = 0 at some point
         return B1, B2, B3, B4, B5
 
     def _A_coefficients(
         self,
-        matrix_material: IsotropicMedium,
-        inclusion_material: IsotropicMedium,
-        vol_fraction: Union[ArrayLike, float],
     ):
 
-        D1, D2, D3 = self._D_values(matrix_material, inclusion_material)
-        B1, B2, B3, B4, B5 = self._B_values(matrix_material, D1, D2, D3, vol_fraction)
+        D1, D2, D3 = self._D_values()
+        B1, B2, B3, B4, B5 = self._B_values(D1, D2, D3)
 
         A1 = D1 * (B4 + B5) - 2.0 * B2
         A2 = (1.0 + D1) * B2 - (B4 + B5)
@@ -288,20 +335,48 @@ class AlignedInclusions(AnisotropicMedium):
         A_first = 2.0 * B2 * B3
         A = A_first - A_sub
 
+        if isinstance(A1, np.ndarray) is False:
+            A = np.array(
+                [
+                    A,
+                ]
+            )
+            A1 = np.array(
+                [
+                    A1,
+                ]
+            )
+            A2 = np.array(
+                [
+                    A2,
+                ]
+            )
+            A3 = np.array(
+                [
+                    A3,
+                ]
+            )
+            A4 = np.array(
+                [
+                    A4,
+                ]
+            )
+            A5 = np.array(
+                [
+                    A5,
+                ]
+            )
+
         return A, A1, A2, A3, A4, A5
 
-    def effective_youngs_modulus(
+    def _youngs_moduli(
         self,
-        matrix_material: IsotropicMedium,
-        inclusion_material: IsotropicMedium,
-        vol_fraction: float,
     ):
-
-        A_i = self._A_coefficients(matrix_material, inclusion_material, vol_fraction)
-        c = vol_fraction
-        E0 = matrix_material.youngs_modulus
+        A_i = self._A_coefficients()
+        c = self.volume_fraction
+        E0 = self.matrix_material.youngs_modulus
         # longitudinal youngs
-        nu0 = matrix_material.poisson_ratio
+        nu0 = self.matrix_material.poisson_ratio
         e11f = A_i[1] + 2 * nu0 * A_i[2]
         e11f2 = c * e11f / A_i[0]
         E11 = E0 / (1 + e11f2)
@@ -316,22 +391,10 @@ class AlignedInclusions(AnisotropicMedium):
         denom = 1.0 + cc4
         E22 = E0 / denom
 
-        return E11, E22
+        return E11, E22, A_i
 
-    def effective_bulk_modulus(
-        self,
-        matrix_material: IsotropicMedium,
-        inclusion_material: IsotropicMedium,
-        vol_fraction: float,
-    ):
-
-        if np.any(self.aspect_ratio > 1):
-            raise NotImplementedError(
-                "effective_youngs_modulus is only valid for aspect ratios <= 1."
-            )
-
-        A_i = self._A_coefficients(matrix_material, inclusion_material, vol_fraction)
-        c = np.asarray(vol_fraction)
+    def _poisson_bulk_moduli(self, mu23, E11, E22, A_i):
+        c = np.asarray(self.volume_fraction)
         if c.ndim == 0:
             c = np.array(
                 [
@@ -339,16 +402,13 @@ class AlignedInclusions(AnisotropicMedium):
                 ]
             )
 
-        _, mu_23 = self.effective_shear_modulus(
-            matrix_material, inclusion_material, vol_fraction
-        )
-        E11, E22 = self.effective_youngs_modulus(
-            matrix_material, inclusion_material, vol_fraction
-        )
-        nu0 = matrix_material.poisson_ratio
+        nu0 = self.matrix_material.poisson_ratio
         # plane-strain bulk modulus:
-        K0bar = matrix_material.lame_first_parameter + matrix_material.shear_modulus
-        init_guess = mu_23
+        K0bar = (
+            self.matrix_material.lame_first_parameter
+            + self.matrix_material.shear_modulus
+        )
+        init_guess = mu23
 
         K23 = np.empty(c.shape)
         for ic, cval in enumerate(c):
@@ -360,12 +420,41 @@ class AlignedInclusions(AnisotropicMedium):
                 A_i[0][ic],
                 E11[ic],
                 E22[ic],
-                mu_23[ic],
+                mu23[ic],
                 cval,
             )
             result = fsolve(_bulk_mod_solver_func, init_guess[ic], args=all_the_args)
             K23[ic] = result
-        return K23
+
+        nu12 = E11 / E22 - E11 / 4 * (1 / mu23 + 1 / K23)
+        return nu12, K23
+
+    def _get_moduli(
+        self,
+    ):
+
+        mu12, mu23 = self._shear_moduli()
+        E11, E22, A_i = self._youngs_moduli()
+        nu_12, K23 = self._poisson_bulk_moduli(mu23, E11, E22, A_i)
+
+        return E11, E22, mu12, mu23, nu_12, K23
+
+    def get_stiffness_matrix(self):
+        self._require_material("get_stiffness_matrix")
+        E11, E22, mu12, mu23, nu12, K23 = self._get_moduli()
+        stiff = TransverseIsotropicStiffness(E11, E22, mu12, mu23, nu12, K23)
+        return stiff
+
+    def velocities(self, theta: ArrayLike):
+        density = self.composite_density
+        if density is None:
+            raise ValueError("calculating velocities requires densities.")
+
+        stiffness = self.get_stiffness_matrix()
+        tc = ThomsenCalculator(density, stiffness.stiffness)
+        tc.set_theta(theta)
+
+        return tc.v_p, tc.v_sv, tc.v_sh
 
 
 def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
@@ -376,3 +465,99 @@ def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
     rhs = (1 + nu0) * (1 - 2 * nu0) / rhs_denom
     lhs = K23 / K0bar
     return lhs - rhs  # will equal 0 at true K23
+
+
+class ThomsenCalculator:
+    def __init__(self, density: ArrayLike, stiffness: ArrayLike):
+
+        # Thomsen, Leon. "Weak elastic anisotropy." Geophysics 51.10 (1986): 1954-1966.
+        # following form in Kendall 2000
+        self.density = density
+        self.stiffness = stiffness
+
+        C = self.stiffness
+        # epsilon = (C11 - C33) / (2 * C33)
+        epsilon = (C[0, 0] - C[2, 2]) / (2 * C[2, 2])
+        # gamma = (C66 - C44) / (2 * C44)
+        gamma = (C[5, 5] - C[3, 3]) / (2 * C[3, 3])
+
+        dstar_denom = 2 * C[2, 2] * C[2, 2]
+        t1 = 2 * (C[0, 2] + C[3, 3]) ** 2
+        t2 = -(C[2, 2] - C[3, 3]) * (C[0, 0] + C[2, 2] - 2 * C[3, 3])
+        dstar = (t1 + t2) / dstar_denom
+
+        self.epsilon = epsilon
+        self.gamma = gamma
+        self.dstar = dstar
+
+        dweak_denom = 2 * C[2, 2] * (C[2, 2] - C[3, 3])
+        self.d_weak = (
+            (C[0, 2] + C[3, 3]) ** 2 - (C[2, 2] - C[3, 3]) ** 2
+        ) / dweak_denom
+        self.alpha_o = np.sqrt(C[2, 2] / density)
+        self.beta_o = np.sqrt(C[3, 3] / density)
+        self.theta: np.ndarray = None
+        self.Dstar_theta: np.ndarray = None
+
+    def set_theta(self, theta: ArrayLike):
+        self.theta = np.asarray(theta)
+        self.Dstar_theta = self._dstar_theta()
+        self.v_p = self._v_p()
+        self.v_sv = self._vsv()
+        self.v_sh = self._vsh()
+
+    def _dstar_theta(self):
+        theta = self.theta
+        b_a_2 = 1 - (self.beta_o / self.alpha_o) ** 2
+
+        sin_cos_2 = np.sin(theta) ** 2 * np.cos(theta) ** 2
+        sin_4 = np.sin(theta) ** 4
+
+        epsi = self.epsilon
+        term_1 = 4 * self.dstar / (b_a_2 * b_a_2) * sin_cos_2
+        term_2 = 4 * (b_a_2 + epsi) * epsi / (b_a_2 * b_a_2) * sin_4
+        sqrt_term = np.sqrt(1 + term_1 + term_2)
+        D_star = 0.5 * b_a_2 * (sqrt_term - 1)
+        return D_star
+
+    def _v_p_full(self):
+        theta = self.theta
+        D_star = self.Dstar_theta
+
+        v_p = self.alpha_o * np.sqrt(1 + self.epsilon * np.sin(theta) ** 2 + D_star)
+        return v_p
+
+    def _vsv_full(self):
+        theta = self.theta
+        b_a_2 = (self.alpha_o / self.beta_o) ** 2
+        epsi = self.epsilon
+        vsv = self.beta_o * np.sqrt(
+            1 + b_a_2 * epsi * np.sin(theta) ** 2 - b_a_2 * self.Dstar_theta
+        )
+        return vsv
+
+    def _vsh_full(self):
+        theta = self.theta
+        vsh = self.beta_o * np.sqrt(1 + 2 * self.gamma * np.sin(theta) ** 2)
+        return vsh
+
+    def _v_p(self):
+        theta = self.theta
+        d = self.d_weak
+        sin_cos_2 = np.sin(theta) ** 2 * np.cos(theta) ** 2
+        sin_4 = np.sin(theta) ** 4
+        v_p = self.alpha_o * (1 + d * sin_cos_2 + self.epsilon * sin_4)
+        return v_p
+
+    def _vsv(self):
+        theta = self.theta
+        a_b_2 = (self.alpha_o / self.beta_o) ** 2
+        epsi = self.epsilon
+        sin_cos_2 = np.sin(theta) ** 2 * np.cos(theta) ** 2
+        vsv = self.beta_o * (1 + a_b_2 * (epsi - self.d_weak) * sin_cos_2)
+        return vsv
+
+    def _vsh(self):
+        theta = self.theta
+        vsh = self.beta_o * (1 + self.gamma * np.sin(theta) ** 2)
+        return vsh
