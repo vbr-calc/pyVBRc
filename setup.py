@@ -20,7 +20,7 @@ setup(
     python_requires=">=3.9",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
-        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
@@ -35,8 +35,8 @@ setup(
     },
     install_requires=requirements,
     license="MIT license",
-    long_description="python utilities for working with the Very Broadband "
-    "Rheology Calculator, see https://github.com/vbr-calc/pyVBRc",
+    long_description=readme,
+    long_description_content_type="text/markdown",
     include_package_data=True,
     package_data={"": ["sample_data/*.mat"]},
     keywords="pyVBRc",
@@ -46,5 +46,4 @@ setup(
     tests_require=test_requirements,
     url="https://github.com/vbr-calc/pyVBRc",
     version="0.1.1",
-    zip_safe=False,
 )
