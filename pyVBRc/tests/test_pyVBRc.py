@@ -62,3 +62,38 @@ def test_units():
 
     vbr = VBRCstruct(sample_file, attach_units=False)
     assert isinstance(vbr.input.SV.T_K, unyt_array) is False
+
+
+@pytest.mark.parametrize("fname", _VBRfiles)
+def test_interpolator_further(fname):
+    sample_file = os.path.join("pyVBRc/sample_data/", fname)
+
+    # vbr = VBRCstruct(sample_file, lut_dimensions=["T_K", "phi", "dg_um"])
+    vbr = VBRCstruct(sample_file)
+    with pytest.raises(RuntimeError, match="Please call set_lut_dimensions"):
+        _ = vbr.interpolator(("anelastic", "andrade_psp", "V"), 0)
+
+    vbr.set_lut_dimensions(["T_K", "phi", "dg_um"])
+    with pytest.raises(RuntimeError, match="the data_field selection"):
+        _ = vbr.interpolator(("anelastic", "andrade_psp"), 0)
+
+    with pytest.raises(ValueError, match="must supply a frequency dimension "):
+        _ = vbr.interpolator(("anelastic", "andrade_psp", "V"))
+
+    _ = vbr.interpolator(
+        ("anelastic", "andrade_psp", "V"),
+        0,
+        log_vars=[
+            "V",
+        ],
+    )
+
+    lut_dims = vbr._get_lut_dimensions()
+    assert len(lut_dims) == 3
+
+    with pytest.raises(ValueError, match="the number of fields in lut_dimensions"):
+        vbr.set_lut_dimensions(
+            [
+                "T_K",
+            ]
+        )

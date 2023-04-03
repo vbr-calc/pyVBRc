@@ -1,0 +1,7 @@
+[run]
+source = pyVBRc
+omit =
+    setup.py
+
+[report]
+fail_under = 98

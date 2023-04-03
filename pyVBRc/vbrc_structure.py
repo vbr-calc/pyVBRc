@@ -198,7 +198,7 @@ def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
                         new = unyt_array(field_value, "")
                     setattr(vbrc_sub_struct, field, new)
             elif hasattr(field_value, "_fieldnames"):
-                # need to go deeper
+                # need to go deeper:
                 new_value = _recursive_unitfication(field_value, field)
                 setattr(vbrc_sub_struct, field, new_value)
 
