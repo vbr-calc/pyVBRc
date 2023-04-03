@@ -4,4 +4,4 @@ omit =
     setup.py
 
 [report]
-fail_under = 97
+fail_under = 98
