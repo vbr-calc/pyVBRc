@@ -2,6 +2,7 @@ include LICENSE
 include *.md
 recursive-include . *.cfg
 recursive-include . *.yaml
+include .coveragerc
 include .editorconfig
 include *.sh
 exclude .flake8
