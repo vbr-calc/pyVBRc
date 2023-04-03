@@ -8,6 +8,8 @@ from scipy.io import loadmat
 from unyt import unyt_array
 from unyt.unit_object import UnitParseError
 
+from pyVBRc.logging import pyvbrc_log
+
 
 class VBRCstruct:
     def __init__(
@@ -39,7 +41,7 @@ class VBRCstruct:
 
         raw_data = loadmat(
             filename,
-            uint16_codec="ascii",  # why this?
+            uint16_codec="ascii",
             struct_as_record=False,
             squeeze_me=True,
         )
@@ -56,6 +58,8 @@ class VBRCstruct:
 
         if attach_units and self.vbrc_version and self.vbrc_version >= Version("1.0.0"):
             self._attach_units()
+
+        pyvbrc_log.info(f"{filename} loaded.")
 
     def _attach_units(self):
 
@@ -184,15 +188,15 @@ def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
                 # it is an array! check if units are known
                 if hasattr(vbrc_sub_struct, "units"):
                     if hasattr(vbrc_sub_struct.units, field) is False:
-                        print(f"Warning: {field} in {struct_name} has no units")
+                        pyvbrc_log.warning(f"{field} in {struct_name} has no units")
                     units = getattr(vbrc_sub_struct.units, field, "")
                     if isinstance(units, np.ndarray) and len(units) == 0:
                         units = ""
                     try:
                         new = unyt_array(field_value, units)
                     except UnitParseError:
-                        print(
-                            f"Warning: {field} in {struct_name} has "
+                        pyvbrc_log.warning(
+                            f"{field} in {struct_name} has "
                             f"unsupported units ({units}), using nondimensional"
                         )
                         new = unyt_array(field_value, "")

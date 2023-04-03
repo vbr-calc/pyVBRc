@@ -3,6 +3,7 @@ from importlib import resources
 from pathlib import PosixPath
 from typing import List, Optional
 
+from pyVBRc.logging import pyvbrc_log
 from pyVBRc.vbrc_structure import VBRCstruct
 
 
@@ -11,6 +12,7 @@ def load_sample_structure(
 ) -> VBRCstruct:
     fullfile = _sample_dir / file
     lut_dims = lut_dimensions or ["T_K", "phi", "dg_um"]
+    pyvbrc_log.info(f"Loading sample file {file}.")
     vbr = VBRCstruct(fullfile, lut_dimensions=lut_dims)
     return vbr
 
