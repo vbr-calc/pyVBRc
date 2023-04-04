@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -146,7 +146,6 @@ class AlignedInclusions(_AnisotropicMedium):
         vbrc_inclusion: VBRCstruct,
         shear_modulus_location: Tuple[str],
         vol_frac: ArrayLike,
-        masks: Optional[List] = None,
         ifreq: Optional[int] = None,
     ):
         """
@@ -163,24 +162,16 @@ class AlignedInclusions(_AnisotropicMedium):
             ["elastic", "anharmonic", "Gu"] or ["anelastic", "andrade_psp", "M"]
         vol_frac: ArrayLike
             the volume fraction of vbrc_inclusion
-        masks : Optional[List]
-            list of masks to apply to the VBRc arrays. Must be length 2 if used.
-            The first element is applied to vbrc_matrix arrays, second element
-            to vbrc_inclusion arrays. Use None to indicate no mask. e.g.,
-            [None, np.array(...)] would subselect vbrc_inclusion and not vbrc_matrix.
-            masks should not subselect frequencies, use ifreq for that.
         ifreq: Optional[int]
             the frequency index to select if the selected shear modulus is
             frequency dependent.
         """
 
-        if masks is None:
-            masks = [None, None]
-        elif len(masks) != 2:
-            raise ValueError(
-                f"The list of masks must be length 2, found {len(masks)}."
-                f"Use None to indicate no mask"
-            )
+        # TODO: allow subselections
+
+        vol_frac = np.asarray(vol_frac)
+        if vol_frac.ndim == 0:
+            vol_frac = _promote_to_1d_array(vol_frac)
 
         mat_inc = []
         for iv, v in enumerate((vbrc_matrix, vbrc_inclusion)):
@@ -195,20 +186,16 @@ class AlignedInclusions(_AnisotropicMedium):
             if G.ndim - rho.ndim == 1:
                 # frequency dependent!
                 if ifreq is None:
+                    vbrloc = ".".join(shear_modulus_location)
                     raise ValueError(
-                        f"{shear_modulus_location} is frequency dependent, "
+                        f"{vbrloc} is frequency dependent, "
                         f"supply a frequency index using ifreq"
                     )
                 G = G[..., ifreq]
 
-            this_mask = masks[iv]
-            if this_mask is not None:
-                G = G[this_mask]
-                rho = rho[this_mask]
-
             if isinstance(G, unyt_array):
-                G = G.values
-                rho = rho.values
+                G = G.value
+                rho = rho.value
 
             if iv == 0:
                 matrix_shape = rho.shape
@@ -220,13 +207,25 @@ class AlignedInclusions(_AnisotropicMedium):
                     )
 
             # must be 1D
-            self._unravel_shape = matrix_shape
             G = G.ravel()
             rho = rho.ravel()
             nu = np.full(G.shape, nu)
 
             m = IsotropicMedium(nu, G, modulus_type="shear", density=rho)
             mat_inc.append(m)
+
+        self._unravel_shape = matrix_shape
+
+        if vol_frac.shape == matrix_shape:
+            vol_frac = vol_frac.ravel()
+        elif len(vol_frac) == 1:
+            pass
+        else:
+            raise RuntimeError(
+                "When material properties are arrays, vol_frac must "
+                "be constant or the same shape. Found shape(vol_frac)"
+                f"={vol_frac.shape} with material shape of {matrix_shape}."
+            )
 
         self.set_material(mat_inc[0], mat_inc[1], vol_frac)
 
@@ -489,9 +488,27 @@ class AlignedInclusions(_AnisotropicMedium):
         return stiff
 
     def velocities(self, theta: ArrayLike):
+        # theta can either be size 1 or same size as density
+
         density = self.composite_density
         if density is None:
             raise ValueError("calculating velocities requires densities.")
+
+        theta = np.asarray(theta)
+        if theta.ndim == 0:
+            theta = _promote_to_1d_array(theta)
+
+        if self._unravel_shape is not None:
+            if theta.shape == self._unravel_shape:
+                theta = theta.ravel()
+            elif len(theta) == 1:
+                pass
+            else:
+                raise RuntimeError(
+                    "When material properties are arrays, theta must "
+                    "be constant or the same shape. Found shape(theta)"
+                    f"={theta.shape} with material shape of {self._unravel_shape}."
+                )
 
         stiffness = self.get_stiffness_matrix()
         tc = ThomsenCalculator(density, stiffness.stiffness)
@@ -499,19 +516,21 @@ class AlignedInclusions(_AnisotropicMedium):
 
         v_p, v_sv, v_sh = tc.v_p, tc.v_sv, tc.v_sh
         if self._unravel_shape is not None:
-            raise NotImplementedError("Not done yet...")
+            v_p = np.reshape(v_p, self._unravel_shape)
+            v_sh = np.reshape(v_sh, self._unravel_shape)
+            v_sv = np.reshape(v_sv, self._unravel_shape)
 
         return v_p, v_sv, v_sh
 
 
-def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
-    # eqs 36 and 37
-    nu12 = E11 / E22 - E11 / 4 * (1 / mu23 + 1 / K23)
-    rhsf1 = c * (2 * (nu12 - nu0) * A3 + (1 - nu0 * (1 + 2 * nu12)) * A4) / A
-    rhs_denom = 1 - nu0 * (1 + 2 * nu12) + rhsf1
-    rhs = (1 + nu0) * (1 - 2 * nu0) / rhs_denom
-    lhs = K23 / K0bar
-    return lhs - rhs  # will equal 0 at true K23
+# def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
+#     # eqs 36 and 37
+#     nu12 = E11 / E22 - E11 / 4 * (1 / mu23 + 1 / K23)
+#     rhsf1 = c * (2 * (nu12 - nu0) * A3 + (1 - nu0 * (1 + 2 * nu12)) * A4) / A
+#     rhs_denom = 1 - nu0 * (1 + 2 * nu12) + rhsf1
+#     rhs = (1 + nu0) * (1 - 2 * nu0) / rhs_denom
+#     lhs = K23 / K0bar
+#     return lhs - rhs  # will equal 0 at true K23
 
 
 class ThomsenCalculator:

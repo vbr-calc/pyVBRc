@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from unyt import unyt_array, unyt_quantity
 
 import pyVBRc.anisotropy.materials as pam
 import pyVBRc.sample_data as sd
@@ -101,23 +102,37 @@ def test_transverse_isotropic_stiffness():
         _ = TransverseIsotropicStiffness(e_l, e_t, g_in, g_out, nu, K)
 
 
+def _get_offset_vbr_structs(file):
+    vbr_1 = sd.load_sample_structure(file)
+    vbr_2 = sd.load_sample_structure(file)
+
+    if isinstance(vbr_2.output.elastic.anharmonic.Gu, unyt_array):
+        offset = unyt_quantity(10, "GPa")
+    else:
+        offset = 10 * 1e9
+
+    vbr_2.output.elastic.anharmonic.Gu += offset
+    vbr_2.output.anelastic.andrade_psp.M += offset
+
+    shear1 = vbr_2.output.elastic.anharmonic.Gu
+    shear2 = vbr_1.output.elastic.anharmonic.Gu
+    assert np.all(shear1 != shear2)
+
+    return vbr_1, vbr_2
+
+
 _VBRfiles = [
     "VBRc_sample_LUT.mat",
-    # "VBRc_sample_LUT_R2021a.mat",
-    # "VBRc_sample_LUT_v1pt0pt0.mat",
+    "VBRc_sample_LUT_R2021a.mat",
+    "VBRc_sample_LUT_v1pt0pt0.mat",
 ]
 
 
 @pytest.mark.parametrize("file", _VBRfiles)
 def test_load_from_vbrc(file):
     # set_materials_from_vbrc_structures
-    vbr_1 = sd.load_sample_structure(file)
-    vbr_2 = sd.load_sample_structure(file)
-    vbr_2.output.elastic.anharmonic.Gu += 10e9
-
-    shear1 = vbr_2.output.elastic.anharmonic.Gu
-    shear2 = vbr_1.output.elastic.anharmonic.Gu
-    assert np.all(shear1 != shear2)
+    vbr_1, vbr_2 = _get_offset_vbr_structs(file)
+    input_shape = vbr_2.output.elastic.anharmonic.Gu.shape
 
     ar = 0.1
     mixture = pam.AlignedInclusions(ar)
@@ -134,6 +149,64 @@ def test_load_from_vbrc(file):
     assert np.all(shear1 != shear2)
 
     _ = mixture.get_stiffness_matrix()
+    vp, vsv, vsh = mixture.velocities(0.0)
+    assert all([v.shape == input_shape for v in (vp, vsv, vsh)])
 
-    with pytest.raises(NotImplementedError):
-        _ = mixture.velocities(0.0)
+    # try other shapes, different combos
+    mixture.set_materials_from_vbrc_structures(
+        vbr_1,
+        vbr_2,
+        ["elastic", "anharmonic", "Gu"],
+        np.full(input_shape, 0.25),
+    )
+    _ = mixture.velocities(0.0)
+    _ = mixture.velocities(np.full(input_shape, 0.5))
+
+    mixture.set_materials_from_vbrc_structures(
+        vbr_1,
+        vbr_2,
+        ["elastic", "anharmonic", "Gu"],
+        0.25,
+    )
+    _ = mixture.velocities(np.full(input_shape, 0.5))
+
+    with pytest.raises(RuntimeError, match="When material properties"):
+        mixture.set_materials_from_vbrc_structures(
+            vbr_1,
+            vbr_2,
+            ["elastic", "anharmonic", "Gu"],
+            np.full((3, 3), 0.25),
+        )
+
+    mixture.set_materials_from_vbrc_structures(
+        vbr_1,
+        vbr_2,
+        ["elastic", "anharmonic", "Gu"],
+        0.25,
+    )
+    with pytest.raises(RuntimeError, match="When material properties"):
+        _ = mixture.velocities(np.full((4, 5), 0.5))
+
+    mixture.set_materials_from_vbrc_structures(
+        vbr_1,
+        vbr_2,
+        ["anelastic", "andrade_psp", "M"],
+        0.25,
+        ifreq=0,
+    )
+    _ = mixture.velocities(np.full(input_shape, 0.5))
+
+    with pytest.raises(ValueError, match="anelastic.andrade_psp.M is freq"):
+        mixture.set_materials_from_vbrc_structures(
+            vbr_1,
+            vbr_2,
+            ["anelastic", "andrade_psp", "M"],
+            0.25,
+        )
+
+    # make it fail (do this last)
+    vbr_1.input.SV.rho = vbr_1.input.SV.rho[0:2, 0:3]
+    with pytest.raises(RuntimeError, match="The matrix and inclusion"):
+        mixture.set_materials_from_vbrc_structures(
+            vbr_1, vbr_2, ["anelastic", "andrade_psp", "M"], 0.25, ifreq=0
+        )
