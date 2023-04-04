@@ -23,6 +23,10 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
     """
 
     Following sayers 1992 notation (eqs 24-29):
+    Sayers, Colin M. "Elastic anisotropy of short-fibre reinforced
+        composites." International journal of solids and structures 29,
+        no. 23 (1992): 2933-2944. https://doi.org/10.1016/0020-7683(92)90150-R
+
 
     Parameters
     ----------
@@ -75,19 +79,7 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
         super().__init__(in_shape[0])
 
     def fill_stiffness(self):
-        # see, e.g., Nejati 2019
-
-        # # pop out some vars for convenience
-        # E0, E_transverse = self.E_longitudinal, self.E_transverse
-        # nu_major = self.nu_major
-        # K_plain = self.K_plain
-
-        # self.E_longitudinal = np.asarray(E_longitudinal)
-        # self.E_transverse = np.asarray(E_transverse)
-        # self.G_inplane = np.asarray(G_inplane)
-        # self.G_outplane = np.asarray(G_outplane)
-        # self.nu_major = np.asarray(nu_major)
-        # self.K_plain = np.asarray(K_plain)
+        # fill the stiffness matrix
 
         C11 = self.G_outplane + self.K_plain
         C33 = self.E_longitudinal + 4 * self.nu_major * self.K_plain
@@ -95,15 +87,6 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
         C13 = 2 * self.nu_major * self.K_plain
         C44 = self.G_inplane
         C66 = self.G_outplane
-
-        # denom_c11_c12 = (nu0*nu0-1)*E_transverse + 2 * E_longitudinal * (1 + nu0) * nu1 * nu1
-        # C11 = E_longitudinal * (E_longitudinal * nu1* nu1 - E_transverse) / denom_c11_c12
-        # C12 = - E_longitudinal * (E_longitudinal * nu1 * nu1 + nu0 * E_transverse) / denom_c11_c12
-        #
-        # C13 = E_longitudinal * E_transverse * nu1 / ((nu0 * nu0 - 1)* E_transverse + 2 * E_longitudinal * nu1 * nu1)
-        # C33 = (nu0 - 1) * E_transverse * E_transverse / ((nu0 - 1) * E_transverse + 2 * E_longitudinal * nu1 * nu1)
-        # C44 = self.G_outplane
-        # C66 = self.G_inplane
 
         # now fill in the stiffness matrix (note index offset for python)
 

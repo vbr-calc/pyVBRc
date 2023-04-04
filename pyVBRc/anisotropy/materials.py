@@ -275,16 +275,9 @@ class AlignedInclusions(_AnisotropicMedium):
         mu_23 = (1 + c / (mu0 / (mu1 - mu0) + 2 * (1 - c) * S[2323])) * mu0
 
         if isinstance(mu_12, np.ndarray) is False:
-            mu_12 = np.array(
-                [
-                    mu_12,
-                ]
-            )
-            mu_23 = np.array(
-                [
-                    mu_23,
-                ]
-            )
+            mu_12 = _promote_to_array(mu_12)
+            mu_23 = _promote_to_array(mu_23)
+
         return mu_12, mu_23
 
     def _D_values(
@@ -336,36 +329,12 @@ class AlignedInclusions(_AnisotropicMedium):
         A = A_first - A_sub
 
         if isinstance(A1, np.ndarray) is False:
-            A = np.array(
-                [
-                    A,
-                ]
-            )
-            A1 = np.array(
-                [
-                    A1,
-                ]
-            )
-            A2 = np.array(
-                [
-                    A2,
-                ]
-            )
-            A3 = np.array(
-                [
-                    A3,
-                ]
-            )
-            A4 = np.array(
-                [
-                    A4,
-                ]
-            )
-            A5 = np.array(
-                [
-                    A5,
-                ]
-            )
+            A = _promote_to_array(A)
+            A1 = _promote_to_array(A1)
+            A2 = _promote_to_array(A2)
+            A3 = _promote_to_array(A3)
+            A4 = _promote_to_array(A4)
+            A5 = _promote_to_array(A5)
 
         return A, A1, A2, A3, A4, A5
 
@@ -561,3 +530,11 @@ class ThomsenCalculator:
         theta = self.theta
         vsh = self.beta_o * (1 + self.gamma * np.sin(theta) ** 2)
         return vsh
+
+
+def _promote_to_array(input):
+    return np.array(
+        [
+            input,
+        ]
+    )
