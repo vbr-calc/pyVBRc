@@ -16,7 +16,7 @@ class StiffnessMatrix(ABC):
 
     @abstractmethod
     def fill_stiffness(self):
-        pass
+        """fill in the stiffness matrix"""
 
 
 class TransverseIsotropicStiffness(StiffnessMatrix):

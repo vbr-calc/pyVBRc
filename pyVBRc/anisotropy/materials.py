@@ -74,7 +74,7 @@ class _AnisotropicMedium(ABC):
 
     @abstractmethod
     def get_stiffness_matrix(self):
-        pass
+        """returns the stiffness matrix"""
 
 
 class AlignedInclusions(_AnisotropicMedium):
@@ -194,13 +194,9 @@ class AlignedInclusions(_AnisotropicMedium):
 
     def _eshelby_disc_fiber(self, poisson_0: float):
         if self.inclusion_type == "discs":
-            # print("getting disc g")
             g = self._disc_g()
         elif self.inclusion_type == "fibers":
-            # print("getting fiber g")
             g = self._fiber_g()
-        else:
-            raise RuntimeError(f"Unexpected inclusion_type: {self.inclusion_type}.")
 
         # print("getting eshelby tensor entries")
         S = self._empty_eshelby()
@@ -275,8 +271,8 @@ class AlignedInclusions(_AnisotropicMedium):
         mu_23 = (1 + c / (mu0 / (mu1 - mu0) + 2 * (1 - c) * S[2323])) * mu0
 
         if isinstance(mu_12, np.ndarray) is False:
-            mu_12 = _promote_to_array(mu_12)
-            mu_23 = _promote_to_array(mu_23)
+            mu_12 = _promote_to_1d_array(mu_12)
+            mu_23 = _promote_to_1d_array(mu_23)
 
         return mu_12, mu_23
 
@@ -329,12 +325,12 @@ class AlignedInclusions(_AnisotropicMedium):
         A = A_first - A_sub
 
         if isinstance(A1, np.ndarray) is False:
-            A = _promote_to_array(A)
-            A1 = _promote_to_array(A1)
-            A2 = _promote_to_array(A2)
-            A3 = _promote_to_array(A3)
-            A4 = _promote_to_array(A4)
-            A5 = _promote_to_array(A5)
+            A = _promote_to_1d_array(A)
+            A1 = _promote_to_1d_array(A1)
+            A2 = _promote_to_1d_array(A2)
+            A3 = _promote_to_1d_array(A3)
+            A4 = _promote_to_1d_array(A4)
+            A5 = _promote_to_1d_array(A5)
 
         return A, A1, A2, A3, A4, A5
 
@@ -365,11 +361,7 @@ class AlignedInclusions(_AnisotropicMedium):
     def _poisson_bulk_moduli(self, mu23, E11, E22, A_i):
         c = np.asarray(self.volume_fraction)
         if c.ndim == 0:
-            c = np.array(
-                [
-                    c,
-                ]
-            )
+            c = _promote_to_1d_array(c)
 
         nu0 = self.matrix_material.poisson_ratio
         # plane-strain bulk modulus:
@@ -532,7 +524,7 @@ class ThomsenCalculator:
         return vsh
 
 
-def _promote_to_array(input):
+def _promote_to_1d_array(input):
     return np.array(
         [
             input,
