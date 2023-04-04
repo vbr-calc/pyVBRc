@@ -2,10 +2,11 @@ import numpy as np
 import pytest
 
 import pyVBRc.anisotropy.materials as pam
+import pyVBRc.sample_data as sd
 from pyVBRc.anisotropy._stiffness import TransverseIsotropicStiffness
 
 
-def test_anisotropy():
+def test_aligned_inclusions():
     # initial test, just try some calls that hit a bunch
     matrix = pam.IsotropicMedium(0.25, 60 * 1e9, "shear", 3300)
     inclusions = pam.IsotropicMedium(0.25, 40 * 1e9, "shear", 2700)
@@ -98,3 +99,41 @@ def test_transverse_isotropic_stiffness():
     K = np.ones((6,))
     with pytest.raises(ValueError, match="All input arrays must have the same"):
         _ = TransverseIsotropicStiffness(e_l, e_t, g_in, g_out, nu, K)
+
+
+_VBRfiles = [
+    "VBRc_sample_LUT.mat",
+    # "VBRc_sample_LUT_R2021a.mat",
+    # "VBRc_sample_LUT_v1pt0pt0.mat",
+]
+
+
+@pytest.mark.parametrize("file", _VBRfiles)
+def test_load_from_vbrc(file):
+    # set_materials_from_vbrc_structures
+    vbr_1 = sd.load_sample_structure(file)
+    vbr_2 = sd.load_sample_structure(file)
+    vbr_2.output.elastic.anharmonic.Gu += 10e9
+
+    shear1 = vbr_2.output.elastic.anharmonic.Gu
+    shear2 = vbr_1.output.elastic.anharmonic.Gu
+    assert np.all(shear1 != shear2)
+
+    ar = 0.1
+    mixture = pam.AlignedInclusions(ar)
+
+    mixture.set_materials_from_vbrc_structures(
+        vbr_1,
+        vbr_2,
+        ["elastic", "anharmonic", "Gu"],
+        0.25,
+    )
+
+    shear1 = mixture.matrix_material.shear_modulus
+    shear2 = mixture.inclusion_material.shear_modulus
+    assert np.all(shear1 != shear2)
+
+    _ = mixture.get_stiffness_matrix()
+
+    with pytest.raises(NotImplementedError):
+        _ = mixture.velocities(0.0)

@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
-from scipy.optimize import fsolve
+from unyt import unyt_array
 
 from pyVBRc.anisotropy._stiffness import TransverseIsotropicStiffness
+from pyVBRc.vbrc_structure import VBRCstruct
 
 
 class IsotropicMedium:
@@ -117,6 +118,7 @@ class AlignedInclusions(_AnisotropicMedium):
         self.inclusion_material: IsotropicMedium = None
         self.volume_fraction: ArrayLike = None
         self.composite_density: ArrayLike = None
+        self._unravel_shape: tuple = None
 
     def set_material(
         self,
@@ -137,6 +139,96 @@ class AlignedInclusions(_AnisotropicMedium):
             )
         else:
             self.composite_density = None
+
+    def set_materials_from_vbrc_structures(
+        self,
+        vbrc_matrix: VBRCstruct,
+        vbrc_inclusion: VBRCstruct,
+        shear_modulus_location: Tuple[str],
+        vol_frac: ArrayLike,
+        masks: Optional[List] = None,
+        ifreq: Optional[int] = None,
+    ):
+        """
+        set the material properties using VBRc structures
+
+        Parameters
+        ----------
+        vbrc_matrix: VBRCstruct
+            the VBRc structure for the matrix phase
+        vbrc_inclusion: VBRCstruct
+            the VBRc structure for the inclusion phase
+        shear_modulus_location: Tuple[str]
+            the output shear modulus of the VBRc structure to use. e.g,
+            ["elastic", "anharmonic", "Gu"] or ["anelastic", "andrade_psp", "M"]
+        vol_frac: ArrayLike
+            the volume fraction of vbrc_inclusion
+        masks : Optional[List]
+            list of masks to apply to the VBRc arrays. Must be length 2 if used.
+            The first element is applied to vbrc_matrix arrays, second element
+            to vbrc_inclusion arrays. Use None to indicate no mask. e.g.,
+            [None, np.array(...)] would subselect vbrc_inclusion and not vbrc_matrix.
+            masks should not subselect frequencies, use ifreq for that.
+        ifreq: Optional[int]
+            the frequency index to select if the selected shear modulus is
+            frequency dependent.
+        """
+
+        if masks is None:
+            masks = [None, None]
+        elif len(masks) != 2:
+            raise ValueError(
+                f"The list of masks must be length 2, found {len(masks)}."
+                f"Use None to indicate no mask"
+            )
+
+        mat_inc = []
+        for iv, v in enumerate((vbrc_matrix, vbrc_inclusion)):
+
+            # always frequency independent:
+            rho = v.input.SV.rho
+
+            nu = v.input.elastic.anharmonic.nu  # constant of length 1
+
+            # this one might be frequency dependent
+            G = v._get_nested_output_field(shear_modulus_location)
+            if G.ndim - rho.ndim == 1:
+                # frequency dependent!
+                if ifreq is None:
+                    raise ValueError(
+                        f"{shear_modulus_location} is frequency dependent, "
+                        f"supply a frequency index using ifreq"
+                    )
+                G = G[..., ifreq]
+
+            this_mask = masks[iv]
+            if this_mask is not None:
+                G = G[this_mask]
+                rho = rho[this_mask]
+
+            if isinstance(G, unyt_array):
+                G = G.values
+                rho = rho.values
+
+            if iv == 0:
+                matrix_shape = rho.shape
+            else:
+                if rho.shape != matrix_shape:
+                    raise RuntimeError(
+                        "The matrix and inclusion arrays do not have"
+                        f"the same shape: {matrix_shape}, {rho.shape}"
+                    )
+
+            # must be 1D
+            self._unravel_shape = matrix_shape
+            G = G.ravel()
+            rho = rho.ravel()
+            nu = np.full(G.shape, nu)
+
+            m = IsotropicMedium(nu, G, modulus_type="shear", density=rho)
+            mat_inc.append(m)
+
+        self.set_material(mat_inc[0], mat_inc[1], vol_frac)
 
     def _require_material(self, func: str):
         if any(
@@ -369,25 +461,15 @@ class AlignedInclusions(_AnisotropicMedium):
             self.matrix_material.lame_first_parameter
             + self.matrix_material.shear_modulus
         )
-        init_guess = mu23
 
-        K23 = np.empty(c.shape)
-        for ic, cval in enumerate(c):
-            all_the_args = (
-                K0bar,
-                nu0,
-                A_i[3][ic],
-                A_i[4][ic],
-                A_i[0][ic],
-                E11[ic],
-                E22[ic],
-                mu23[ic],
-                cval,
-            )
-            result = fsolve(_bulk_mod_solver_func, init_guess[ic], args=all_the_args)
-            K23[ic] = result
-
-        nu12 = E11 / E22 - E11 / 4 * (1 / mu23 + 1 / K23)
+        # Zhao et al 1989 have explicit form for nu_12 (see Sayers 1992 too)
+        numer = nu0 * (A_i[1] + 2 * nu0 * A_i[2]) + (A_i[3] - nu0 * A_i[4])
+        denom = A_i[0] + c * (A_i[1] + 2 * nu0 * A_i[2])
+        nu12 = nu0 - c * numer / denom
+        term1 = 2 * (nu12 - nu0) * A_i[3] + (1 - nu0 * (1 + 2 * nu12)) * A_i[4]
+        term2 = c * term1 / A_i[0]
+        rhs_denom = 1 - nu0 * (1 + 2 * nu12) + term2
+        K23 = K0bar * (1 + nu0) * (1 - 2 * nu0) / rhs_denom
         return nu12, K23
 
     def _get_moduli(
@@ -415,7 +497,11 @@ class AlignedInclusions(_AnisotropicMedium):
         tc = ThomsenCalculator(density, stiffness.stiffness)
         tc.set_theta(theta)
 
-        return tc.v_p, tc.v_sv, tc.v_sh
+        v_p, v_sv, v_sh = tc.v_p, tc.v_sv, tc.v_sh
+        if self._unravel_shape is not None:
+            raise NotImplementedError("Not done yet...")
+
+        return v_p, v_sv, v_sh
 
 
 def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
