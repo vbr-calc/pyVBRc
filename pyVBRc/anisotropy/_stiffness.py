@@ -81,12 +81,17 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
     def fill_stiffness(self):
         # fill the stiffness matrix
 
-        C11 = self.G_outplane + self.K_plain
-        C33 = self.E_longitudinal + 4 * self.nu_major * self.K_plain
-        C12 = self.K_plain - self.G_outplane
+        # orig:
+        mu12 = self.G_outplane
+        mu31 = self.G_inplane
+
+        C11 = mu12 + self.K_plain
+        nusq = self.nu_major**2
+        C33 = self.E_longitudinal + 4 * nusq * self.K_plain
+        C12 = self.K_plain - mu12
         C13 = 2 * self.nu_major * self.K_plain
-        C44 = self.G_inplane
-        C66 = self.G_outplane
+        C44 = mu31
+        C66 = mu12
 
         # now fill in the stiffness matrix (note index offset for python)
 
@@ -99,11 +104,32 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
         self.stiffness[5, 5, :] = C66
 
         # off diagonals (upper-right)
-        self.stiffness[0, 1] = C12
-        self.stiffness[0, 2] = C13
-        self.stiffness[1, 2] = C13
+        self.stiffness[0, 1, :] = C12
+        self.stiffness[0, 2, :] = C13
+        self.stiffness[1, 2, :] = C13
 
         # symmetric lower-left
-        self.stiffness[1, 0] = C12
-        self.stiffness[2, 0] = C13
-        self.stiffness[2, 1] = C13
+        self.stiffness[1, 0, :] = C12
+        self.stiffness[2, 0, :] = C13
+        self.stiffness[2, 1, :] = C13
+
+    @property
+    def a_1(self):
+        # anisotropy factor a_1
+        C = self.stiffness
+        t1 = C[0, 0] + C[2, 2]
+        t2 = -2.0 * C[0, 2]
+        t3 = -4.0 * C[3, 3]
+        return t1 + t2 + t3
+
+    @property
+    def a_2(self):
+        # anisotropy factor a_2
+        C = self.stiffness
+        return C[0, 0] - 3 * C[0, 1] + 2 * C[0, 2] - 2 * C[3, 3]
+
+    @property
+    def a_3(self):
+        # anisotropy factor a_3
+        C = self.stiffness
+        return 4 * C[0, 0] - 3 * C[2, 2] - C[0, 2] - 2 * C[3, 3]

@@ -102,6 +102,54 @@ def test_transverse_isotropic_stiffness():
         _ = TransverseIsotropicStiffness(e_l, e_t, g_in, g_out, nu, K)
 
 
+def test_transverse_isotropic_stiffness_values():
+    # Tando and Weng, Sayers test case
+    # AlignedInclusions()
+    # epoxy matrix:
+    matrix = pam.IsotropicMedium(0.35, 2.76 * 1e9, "youngs")
+    # glass fibres
+    inclusions = pam.IsotropicMedium(0.2, 72.4 * 1e9, "youngs")
+    ar = 2.0
+    ai = pam.AlignedInclusions(ar)
+    ai.set_material(matrix, inclusions, 0.0)
+
+    # check that when vol fraction is 0, we get the matrix exactly
+    E11, E22, mu12, mu23, nu12, K23 = ai._get_moduli()
+
+    assert E11 == E22
+    assert E11 == matrix.youngs_modulus
+    assert mu12 == mu23
+    assert mu12 == matrix.shear_modulus
+    assert nu12 == matrix.poisson_ratio
+
+    # nu = matrix.poisson_ratio
+    # Kiso = matrix.plain_strain_bulk * ()
+    assert np.allclose(K23, matrix.plain_strain_bulk)
+
+    # check some stiffness matrix values
+    stiffness = ai.get_stiffness_matrix()
+    C = stiffness.stiffness
+    assert C[3, 3] == C[4, 4]
+    assert C[3, 3] == C[5, 5]
+    assert C[0, 0] == C[2, 2]
+    assert C[0, 0] == C[1, 1]
+    # assert C[2, 2] == E11 + 2 * C[2, 0]
+    assert C[0, 1] == C[1, 0]
+    assert C[0, 2] == C[2, 0]
+    assert C[0, 2] == C[2, 1]
+    assert C[0, 2] == C[1, 2]
+
+    # vol fracgtion of 0 should reduce to isotropic case
+    # in which case
+    assert C[0, 1] == C[0, 2]
+
+    # and anisotropy factors should go to 0
+
+    assert np.allclose(stiffness.a_1, 0.0, atol=1e-6)
+    assert np.allclose(stiffness.a_2, 0.0, atol=1e-6)
+    assert np.allclose(stiffness.a_3, 0.0, atol=1e-6)
+
+
 def _get_offset_vbr_structs(file):
     vbr_1 = sd.load_sample_structure(file)
     vbr_2 = sd.load_sample_structure(file)

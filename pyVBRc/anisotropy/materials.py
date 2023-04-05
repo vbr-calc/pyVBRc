@@ -67,6 +67,12 @@ class IsotropicMedium:
             self._pwave_M = M
         return self._pwave_M
 
+    @property
+    def plain_strain_bulk(self):
+        lame = self.lame_first_parameter
+        shear = self.shear_modulus
+        return lame + shear
+
 
 class _AnisotropicMedium(ABC):
 
