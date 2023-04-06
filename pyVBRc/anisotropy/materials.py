@@ -585,7 +585,7 @@ class AlignedInclusions(_AnisotropicMedium):
 
 
 class ThomsenCalculator:
-    def __init__(self, density: ArrayLike, stiffness: ArrayLike):
+    def __init__(self, density: ArrayLike, stiffness: ArrayLike, approx: bool = False):
 
         # Thomsen, Leon. "Weak elastic anisotropy." Geophysics 51.10 (1986): 1954-1966.
         # following form in Kendall 2000
@@ -615,13 +615,19 @@ class ThomsenCalculator:
         self.beta_o = np.sqrt(C[3, 3] / density)
         self.theta: np.ndarray = None
         self.Dstar_theta: np.ndarray = None
+        self.approx = approx
 
     def set_theta(self, theta: ArrayLike):
         self.theta = np.asarray(theta)
         self.Dstar_theta = self._dstar_theta()
-        self.v_p = self._v_p()
-        self.v_sv = self._vsv()
-        self.v_sh = self._vsh()
+        if self.approx:
+            self.v_p = self._v_p()
+            self.v_sv = self._vsv()
+            self.v_sh = self._vsh()
+        else:
+            self.v_p = self._v_p_full()
+            self.v_sv = self._vsv_full()
+            self.v_sh = self._vsh_full()
 
     def _dstar_theta(self):
         theta = self.theta

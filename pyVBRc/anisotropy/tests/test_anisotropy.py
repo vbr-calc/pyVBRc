@@ -72,13 +72,12 @@ def test_thomsen_calculator():
 
     t_c = pam.ThomsenCalculator(dens, C.stiffness)
 
-    t_c.set_theta(
-        np.array(
-            [
-                0.0,
-            ]
-        )
+    theta = np.array(
+        [
+            0.0,
+        ]
     )
+    t_c.set_theta(theta)
 
     # check that they run
     assert t_c.v_p > 0.0
@@ -88,6 +87,16 @@ def test_thomsen_calculator():
     assert t_c._v_p_full() > 0.0
     assert t_c._vsh_full() > 0.0
     assert t_c._vsv_full() > 0.0
+
+    inclusions = pam.IsotropicMedium(0.25, 50 * 1e9, "shear", 2700)
+    mixture = pam.AlignedInclusions(10)
+    mixture.set_material(matrix, inclusions, 0.01)
+    C = mixture.get_stiffness_matrix()
+    dens = mixture.composite_density
+    t_c2 = pam.ThomsenCalculator(dens, C.stiffness, approx=True)
+    t_c2.set_theta(theta)
+    diff = np.abs(t_c.v_p - t_c2.v_p) / t_c2.v_p
+    assert diff < 0.01  # approximate agrees to within a percent when little aniso
 
 
 def test_transverse_isotropic_stiffness():
