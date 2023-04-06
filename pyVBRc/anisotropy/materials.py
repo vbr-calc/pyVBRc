@@ -10,6 +10,23 @@ from pyVBRc.vbrc_structure import VBRCstruct
 
 
 class IsotropicMedium:
+    """
+    An end-member isotropic medium
+
+    Parameters
+    ----------
+    poisson_ratio
+        the poisson ratio of the material
+    modulus
+        either the shear, Youngs or bulk modulus of the material
+    modulus_type : str
+        one of "shear", "youngs" or "bulk" depending on the previous parameter
+    density : Optional
+        the density of the material. only needed for calculating velocities, can
+        omit if you only want moduli.
+
+    """
+
     def __init__(
         self, poisson_ratio: float, modulus: float, modulus_type: str, density=None
     ):
@@ -31,6 +48,7 @@ class IsotropicMedium:
 
     @property
     def bulk_modulus(self):
+        """the bulk modulus"""
         if self._bulk_modulus is None:
             nu = self.poisson_ratio
             K = 2 * self.shear_modulus * (1 + nu) / (3 * (1 - 2 * nu))
@@ -41,6 +59,7 @@ class IsotropicMedium:
 
     @property
     def youngs_modulus(self):
+        """the Youngs modulus"""
         if self._youngs_modulus is None:
             E = 2 * self.shear_modulus * (1 + self.poisson_ratio)
             self._youngs_modulus = E
@@ -50,6 +69,7 @@ class IsotropicMedium:
 
     @property
     def lame_first_parameter(self):
+        """Lame's first parameter (lambda)"""
         # commonly lambda
         if self._lame_first is None:
             nu = self.poisson_ratio
@@ -61,10 +81,10 @@ class IsotropicMedium:
 
     @property
     def pwave_effective_modulus(self):
+        """Effective p-wave Modulus, 2 * G (1 - nu)/ (1 - 2 * nu) = K + 4/3 G"""
         if self._pwave_M is None:
             nu = self.poisson_ratio
-            M = 2 * self.shear_modulus * (1 - nu) / (1 - 2 * nu)
-            self._pwave_M = M
+            self._pwave_M = 2 * self.shear_modulus * (1 - nu) / (1 - 2 * nu)
         return self._pwave_M
 
     @property
@@ -72,6 +92,38 @@ class IsotropicMedium:
         lame = self.lame_first_parameter
         shear = self.shear_modulus
         return lame + shear
+
+    _v_p = None
+
+    @property
+    def v_p(self):
+        """p-wave velocity"""
+        if self._v_p is None:
+            if self.density is None:
+                raise ValueError("calculating v_p requires density to be set.")
+            self._v_p = np.sqrt(self.pwave_effective_modulus / self.density)
+        return self._v_p
+
+    _v_s = None
+
+    @property
+    def v_s(self):
+        """shear wave velocity"""
+        if self._v_s is None:
+            if self.density is None:
+                raise ValueError("calculating v_s requires density to be set.")
+            self._v_s = np.sqrt(self.shear_modulus / self.density)
+        return self._v_s
+
+    def set_density(self, density):
+        """
+        Set the density for the material
+
+        Parameters
+        ----------
+        density: scalar or array
+        """
+        self.density = density
 
 
 class _AnisotropicMedium(ABC):
@@ -461,7 +513,8 @@ class AlignedInclusions(_AnisotropicMedium):
             c = _promote_to_1d_array(c)
 
         nu0 = self.matrix_material.poisson_ratio
-        # plane-strain bulk modulus:
+
+        # plane-strain bulk modulus of the matrix:
         K0bar = (
             self.matrix_material.lame_first_parameter
             + self.matrix_material.shear_modulus
@@ -471,13 +524,15 @@ class AlignedInclusions(_AnisotropicMedium):
         numer = nu0 * (A_i[1] + 2 * nu0 * A_i[2]) + (A_i[3] - nu0 * A_i[4])
         denom = A_i[0] + c * (A_i[1] + 2 * nu0 * A_i[2])
         nu12 = nu0 - c * numer / denom
+
+        # and now we can calculate K23
         term1 = 2 * (nu12 - nu0) * A_i[3] + (1 - nu0 * (1 + 2 * nu12)) * A_i[4]
         term2 = c * term1 / A_i[0]
         rhs_denom = 1 - nu0 * (1 + 2 * nu12) + term2
         K23 = K0bar * (1 + nu0) * (1 - 2 * nu0) / rhs_denom
         return nu12, K23
 
-    def _get_moduli(
+    def get_moduli(
         self,
     ):
 
@@ -489,7 +544,7 @@ class AlignedInclusions(_AnisotropicMedium):
 
     def get_stiffness_matrix(self):
         self._require_material("get_stiffness_matrix")
-        E11, E22, mu12, mu23, nu12, K23 = self._get_moduli()
+        E11, E22, mu12, mu23, nu12, K23 = self.get_moduli()
         stiff = TransverseIsotropicStiffness(E11, E22, mu12, mu23, nu12, K23)
         return stiff
 
@@ -527,16 +582,6 @@ class AlignedInclusions(_AnisotropicMedium):
             v_sv = np.reshape(v_sv, self._unravel_shape)
 
         return v_p, v_sv, v_sh
-
-
-# def _bulk_mod_solver_func(K23, K0bar, nu0, A3, A4, A, E11, E22, mu23, c):
-#     # eqs 36 and 37
-#     nu12 = E11 / E22 - E11 / 4 * (1 / mu23 + 1 / K23)
-#     rhsf1 = c * (2 * (nu12 - nu0) * A3 + (1 - nu0 * (1 + 2 * nu12)) * A4) / A
-#     rhs_denom = 1 - nu0 * (1 + 2 * nu12) + rhsf1
-#     rhs = (1 + nu0) * (1 - 2 * nu0) / rhs_denom
-#     lhs = K23 / K0bar
-#     return lhs - rhs  # will equal 0 at true K23
 
 
 class ThomsenCalculator:

@@ -53,6 +53,14 @@ def test_isotropic_medium():
     m3 = pam.IsotropicMedium(0.25, m1.youngs_modulus, "youngs")
     assert m3.shear_modulus == m1.shear_modulus
 
+    with pytest.raises(ValueError, match="calculating v_p requires"):
+        _ = m3.v_p
+    with pytest.raises(ValueError, match="calculating v_s requires"):
+        _ = m3.v_s
+
+    m3.set_density(3000)
+    assert m3.v_p > m3.v_s
+
 
 def test_thomsen_calculator():
     matrix = pam.IsotropicMedium(0.25, 60 * 1e9, "shear", 3300)
@@ -114,7 +122,7 @@ def test_transverse_isotropic_stiffness_values():
     ai.set_material(matrix, inclusions, 0.0)
 
     # check that when vol fraction is 0, we get the matrix exactly
-    E11, E22, mu12, mu23, nu12, K23 = ai._get_moduli()
+    E11, E22, mu12, mu23, nu12, K23 = ai.get_moduli()
 
     assert E11 == E22
     assert E11 == matrix.youngs_modulus
