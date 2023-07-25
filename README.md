@@ -10,7 +10,7 @@ To install the latest release:
 pip install pyVBRc
 ```
 
-To install the latest development version, fork and clone this repository then run 
+To install the latest development version, fork and clone this repository then run
 
 ```
 pip install .
@@ -115,10 +115,50 @@ which yields
 
 **NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
 
+## Additional examples
+
+For now, check out the [examples directory](https://github.com/vbr-calc/pyVBRc/tree/main/examples) for more examples.
+
 ## Getting help
 
+If you find a bug, please [open an issue](https://github.com/vbr-calc/pyVBRc/issues).
+
+If you have questions, feel free to ask in the VBRc slack channel (see [here](https://vbr-calc.github.io/vbr/contrib/contributing/) for how to join.)
+
 ## Contributing
-### installing from source
+
+Contributions fall a fork-pull request open source work flow.
+
+### Development installation
+
+After cloning your fork, you can install `pyVBRc` with
+
+```shell
+pip install -e .
+```
+
+and then install all the development requirements with
+
+```shell
+pip install -r requirements_dev.txt
+```
+
 ### running the test suite
 
+After completing your development installation, you can run the test suite
+with
 
+```shell
+pytest -v
+```
+To also generate a code coverage report
+
+```shell
+pytest -v --cov=./ --cov-report=html:coverage/
+```
+After tests run, you can then open the `coverage/index.html` file in your
+preferred browser and check out where test coverage is poor.
+
+Pull requests are required to maintain the code coverage of the code base, so
+you'll have to write new tests to cover any new code. Bug fixes may not require
+new tests if coverage is unchanged.
