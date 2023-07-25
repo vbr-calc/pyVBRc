@@ -21,7 +21,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -U setuptools setuptools_scm wheel twine
     - name: Build and check source tarball
-      run: python setup.py sdist bdist_wheel
+      run: python _old_setup_py.txt sdist bdist_wheel
     - name: Twine check
       run: twine check dist/*
     - name: Publish distribution to PyPI
