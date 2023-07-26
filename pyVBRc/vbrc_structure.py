@@ -195,9 +195,8 @@ def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
                     try:
                         new = unyt_array(field_value, units)
                     except UnitParseError:
-                        pyvbrc_log.warning(
-                            f"{field} in {struct_name} has "
-                            f"unsupported units ({units}), using nondimensional"
+                        pyvbrc_log.warning(f"{field} in {struct_name} has "
+f"unsupported units ({units}), using nondimensional"
                         )
                         new = unyt_array(field_value, "")
                     setattr(vbrc_sub_struct, field, new)
