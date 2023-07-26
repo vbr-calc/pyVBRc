@@ -121,7 +121,8 @@ which yields
 
 ### Anistropy
 
-The `pyVBRc` includes some limited functionality for calculating anistropic properties.
+The `pyVBRc` includes some limited functionality for calculating anistropic properties. See the Examples for
+a description.
 
 ### Examples
 
