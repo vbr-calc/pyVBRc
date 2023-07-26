@@ -1,6 +1,5 @@
 from pathlib import PosixPath
 from typing import List, Tuple, Union
-from pyVBRc.logging import pyvbrc_log
 
 import numpy as np
 from packaging.version import Version
@@ -9,7 +8,7 @@ from scipy.io import loadmat
 from unyt import unyt_array
 from unyt.unit_object import UnitParseError
 
-
+from pyVBRc.logging import pyvbrc_log
 
 
 class VBRCstruct:
