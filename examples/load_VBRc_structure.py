@@ -1,7 +1,7 @@
-from pyVBRc.vbrc_structure import VBRCstruct
-from pyVBRc.sample_data import get_sample_filename
-
 import matplotlib.pyplot as plt
+
+from pyVBRc.sample_data import get_sample_filename
+from pyVBRc.vbrc_structure import VBRCstruct
 
 file = get_sample_filename("VBRc_sample_LUT.mat")
 vbr = VBRCstruct(file, lut_dimensions=["T_K", "phi", "dg_um"])
