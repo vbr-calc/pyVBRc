@@ -129,9 +129,7 @@ class VBRCstruct:
                 "Please call set_lut_dimensions prior to building an interpolator."
             )
 
-        data = self.output
-        for df in data_field:
-            data = getattr(data, df)
+        data = self._get_nested_output_field(data_field)
 
         if isinstance(data, np.ndarray) is False:
             raise RuntimeError("the data_field selection did not return an array.")
@@ -176,6 +174,12 @@ class VBRCstruct:
                 pts = np.log10(pts)
             points.append(pts)
         return points
+
+    def _get_nested_output_field(self, the_field: Tuple[str]):
+        data = self.output
+        for df in the_field:
+            data = getattr(data, df)
+        return data
 
 
 def _recursive_unitfication(vbrc_sub_struct, struct_name: str):
