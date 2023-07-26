@@ -162,3 +162,37 @@ preferred browser and check out where test coverage is poor.
 Pull requests are required to maintain the code coverage of the code base, so
 you'll have to write new tests to cover any new code. Bug fixes may not require
 new tests if coverage is unchanged.
+
+### code style
+
+#### style checks
+Code style is enforced with `pre-commit`. When you submit a pull request, the
+`pre-commit` bot will test whether your code passes the style requirements. If
+that test fails, you can have `pre-commit` autofix your pull request by adding
+a comment to the pull request that reads
+
+```
+pre-commit autofix
+```
+
+and the bot will try to fix the style failures. After it runs, if you still
+have work to do on the PR, you'll want to run
+
+```
+git pull
+```
+
+locally so that you can pull in the bot's changes to your branch.
+
+#### using pre-commit during development
+
+If you'd like to ensure that your code passes all style requirements while
+you're developing, you can use pre-commit throughout development. After
+building your development installation, you can initialize pre-commit within
+your repository with
+
+```shell
+pre-commit install
+```
+
+and your code changes will be checked every time you commit.
