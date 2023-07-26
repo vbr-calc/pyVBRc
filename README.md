@@ -2,7 +2,7 @@
 
 pyVBRc is a python package for working with output from the [Very Broadband Rheology Calculator](https://github.com/vbr-calc/vbr). pyVBRc is currently (very) experimental and is likely to change drastically between early versions, but feel free to use it.
 
-## installation
+## Installation
 
 To install the latest release:
 
@@ -10,20 +10,17 @@ To install the latest release:
 pip install pyVBRc
 ```
 
-To install the latest development version, fork and clone this repository then run
+To install the latest development version, see the section on
+[Contributing](#contributing).
 
-```
-pip install .
-```
-
-## usage
+## Usage
 
 As of now, you can use `pyVBRc` to:
 
 * load a VBR structure
 * interpolate between calculated values in the VBR structure
 
-### loading a VBR structure
+### Loading a VBR structure
 
 The primary gateway into working with VBRc data in the `VBRstruct`. Note that the following examples rely on a tiny VBR output file, `VBRc_sample_LUT.mat`, included in pyVBRc to allow simple testing of functionality. For any real application, you should generate your own VBR structure (in MATLAB or Octave).
 
@@ -53,7 +50,7 @@ plt.show()
 
 ![](https://raw.githubusercontent.com/vbr-calc/pyVBRc/main/examples/andrade_psp_T_dep.png)
 
-## interpolating
+### Interpolating
 
 In some situations, it may be useful to interpolate VBRc results at arbitrary points between calculated points. The sample file,`"VBRc_sample_LUT.mat"` was calculated for a very coarse grid of temperature (`T_K`), melt fraction (`phi`) and grain size(`dg_um`) at two frequencies to serve as a simple look-up table (LUT). You can provide these variable names to the `lut_dimensions` keyword argument when initializing the `VBRCstruct`:
 
@@ -115,7 +112,7 @@ which yields
 
 **NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
 
-## Additional examples
+### Additional examples
 
 For now, check out the [examples directory](https://github.com/vbr-calc/pyVBRc/tree/main/examples) for more examples.
 
@@ -127,14 +124,25 @@ If you have questions, feel free to ask in the VBRc slack channel (see [here](ht
 
 ## Contributing
 
-Contributions fall a fork-pull request open source work flow.
+Contributions fall a fork-pull request open source work flow:
+
+1. Fork this repository
+2. Clone your fork and build a development installation (see below)
+3. Create a new branch (`git checkout -b your_new_branch_name`)
+4. Commit changes on your branch
+5. Push your branch to your fork
+6. Submit pull request (PR) to the main `pyVBRc` repository
+
+After PR submission, a number of automated tests will run and your changes
+will be reviewed. Often this may involve some iteration, but we'll help you out
+if you're new to git!
 
 ### Development installation
 
 After cloning your fork, you can install `pyVBRc` with
 
 ```shell
-pip install -e .
+pip install -e .[dev]
 ```
 
 and then install all the development requirements with

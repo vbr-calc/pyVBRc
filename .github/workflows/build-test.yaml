@@ -21,10 +21,9 @@ jobs:
         sudo apt-get install libopenblas-dev
         python -m pip install --upgrade pip
         python -m pip install scipy==1.8.0
-        python -m pip install -r requirements_dev.txt
     - name: Setup pyVBRc
       run: |
-        python -m pip install -e .
+        python -m pip install -e .[dev]
     - name: Run Tests
       run: pytest --cov=./ --cov-report=xml:coverage/coverage.xml -v pyVBRc/
     # https://github.com/marketplace/actions/codecov#example-workflowyml-with-codecov-action
