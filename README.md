@@ -15,16 +15,18 @@ To install the latest development version, see the section on
 
 ## Usage
 
-As of now, you can use `pyVBRc` to:
+As of now, the primary uses of the `pyVBRc` are to:
 
 * load a VBR structure
 * interpolate between calculated values in the VBR structure
 
 ### Loading a VBR structure
 
-The primary gateway into working with VBRc data in the `VBRstruct`. Note that the following examples rely on a tiny VBR output file, `VBRc_sample_LUT.mat`, included in pyVBRc to allow simple testing of functionality. For any real application, you should generate your own VBR structure (in MATLAB or Octave).
+The primary gateway into working with VBRc data is the `VBRstruct` object.
+Note that the following examples rely on a tiny VBR output file, `VBRc_sample_LUT.mat`, included in pyVBRc to allow
+simple testing of functionality. For any real application, you should generate your own VBR structure (in MATLAB or Octave).
 
-The most basic usage of the `VBRCstruct` object is to load a `.mat` file:
+The most basic usage of the `VBRCstruct` object is to load a `.mat` file containing a `VBR` structure that you have saved:
 
 ```python
 from pyVBRc.vbrc_structure import VBRCstruct
@@ -33,9 +35,14 @@ file = get_sample_filename("VBRc_sample_LUT.mat")
 vbr = VBRCstruct(file)
 ```
 
-The `vbr` object will mirror the standard VBR structure (see [here](https://vbr-calc.github.io/vbr/gettingstarted/)) with the exception that the `in` and `out` structures of the matlab VBR structure are replaced with `input` and `output` in the python class.
+The `vbr` object will mirror the standard VBR structure (see [here](https://vbr-calc.github.io/vbr/gettingstarted/))
+with the exception that the `in` and `out` structures of the matlab VBR structure are replaced with `input` and `output`
+in the python class.
 
-Once loaded, you can access the data just as in matlab. This `.mat` file contains a `VBR` structure that was run with varying temperature (`T_K`), melt fraction (`phi`) and grain size(`dg_um`) at two frequencies. The following example plots the temperature dependence of attenuation for the Andrade pseuodo-period scaling at a fixed grain size, melt fraction and frequency:
+Once loaded, you can access the data just as in matlab. This `.mat` file contains a `VBR` structure that was run with
+varying temperature (`T_K`), melt fraction (`phi`) and grain size(`dg_um`) at two frequencies. The following example
+plots the temperature dependence of attenuation for the Andrade pseuodo-period scaling at a fixed grain size,
+melt fraction and frequency:
 
 ```
 import matplotlib.pyplot as plt
@@ -112,9 +119,15 @@ which yields
 
 **NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
 
-### Additional examples
+### Anistropy
 
-For now, check out the [examples directory](https://github.com/vbr-calc/pyVBRc/tree/main/examples) for more examples.
+The `pyVBRc` includes some limited functionality for calculating anistropic properties. See the Examples for
+a description.
+
+### Examples
+
+The [examples directory](https://github.com/vbr-calc/pyVBRc/tree/main/examples) contains a number of jupyter notebooks
+that demonstrate usage.
 
 ## Getting help
 
