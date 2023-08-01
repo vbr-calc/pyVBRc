@@ -5,7 +5,6 @@ from numpy.typing import ArrayLike
 
 
 class StiffnessMatrix(ABC):
-
     _base_shape = (6, 6)
 
     def __init__(self, n_states: int):
@@ -48,7 +47,6 @@ class TransverseIsotropicStiffness(StiffnessMatrix):
         nu_major: ArrayLike,
         K_plain: ArrayLike,
     ):
-
         self.E_longitudinal = np.asarray(E_longitudinal)
         self.E_transverse = np.asarray(E_transverse)
         self.G_inplane = np.asarray(G_inplane)

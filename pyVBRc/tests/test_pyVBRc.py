@@ -24,7 +24,6 @@ def test_mat_load(fname):
 
 @pytest.mark.parametrize("fname", _VBRfiles)
 def test_interpolator(fname):
-
     sample_file = os.path.join("pyVBRc/sample_data/", fname)
 
     vbr = VBRCstruct(sample_file, lut_dimensions=["T_K", "phi", "dg_um"])

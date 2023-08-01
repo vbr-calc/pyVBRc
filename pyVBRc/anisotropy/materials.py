@@ -127,7 +127,6 @@ class IsotropicMedium:
 
 
 class _AnisotropicMedium(ABC):
-
     model_name: str = None
     model_reference: dict = None
 
@@ -137,7 +136,6 @@ class _AnisotropicMedium(ABC):
 
 
 class AlignedInclusions(_AnisotropicMedium):
-
     model_name = "AlignedInclusions"
     model_reference = dict(
         title="The effect of aspect ratio of inclusions on the elastic properties "
@@ -151,7 +149,6 @@ class AlignedInclusions(_AnisotropicMedium):
     )
 
     def __init__(self, aspect_ratio: Union[ArrayLike, float]):
-
         aspect_ratio = np.asarray(aspect_ratio)
         lt_1 = np.sum(aspect_ratio < 1)
         eq_1 = np.sum(aspect_ratio == 1)
@@ -184,7 +181,6 @@ class AlignedInclusions(_AnisotropicMedium):
         inclusion_material: IsotropicMedium,
         vol_fraction: ArrayLike,
     ):
-
         self.matrix_material = matrix_material
         self.inclusion_material = inclusion_material
         self.volume_fraction = vol_fraction
@@ -233,7 +229,6 @@ class AlignedInclusions(_AnisotropicMedium):
 
         mat_inc = []
         for iv, v in enumerate((vbrc_matrix, vbrc_inclusion)):
-
             # always frequency independent:
             rho = v.input.SV.rho
 
@@ -445,7 +440,6 @@ class AlignedInclusions(_AnisotropicMedium):
         D2,
         D3,
     ):
-
         S = self._eshelby_tensor
         c = self.volume_fraction
         B1 = c * D1 + D2 + (1.0 - c) * (D1 * S[1111] + 2 * S[2211])
@@ -459,7 +453,6 @@ class AlignedInclusions(_AnisotropicMedium):
     def _A_coefficients(
         self,
     ):
-
         D1, D2, D3 = self._D_values()
         B1, B2, B3, B4, B5 = self._B_values(D1, D2, D3)
 
@@ -535,7 +528,6 @@ class AlignedInclusions(_AnisotropicMedium):
     def get_moduli(
         self,
     ):
-
         mu12, mu23 = self._shear_moduli()
         E11, E22, A_i = self._youngs_moduli()
         nu_12, K23 = self._poisson_bulk_moduli(mu23, E11, E22, A_i)
@@ -586,7 +578,6 @@ class AlignedInclusions(_AnisotropicMedium):
 
 class ThomsenCalculator:
     def __init__(self, density: ArrayLike, stiffness: ArrayLike, approx: bool = False):
-
         # Thomsen, Leon. "Weak elastic anisotropy." Geophysics 51.10 (1986): 1954-1966.
         # following form in Kendall 2000
         self.density = density

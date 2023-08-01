@@ -62,7 +62,6 @@ class VBRCstruct:
         pyvbrc_log.info(f"{filename} loaded.")
 
     def _attach_units(self):
-
         # first the inputs
         self.input = _recursive_unitfication(self.input, "input")
 
