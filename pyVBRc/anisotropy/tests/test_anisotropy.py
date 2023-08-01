@@ -23,7 +23,6 @@ def test_aligned_inclusions():
 
 
 def test_aligned_inclusion_errors():
-
     with pytest.raises(ValueError, match="Detected a mix"):
         _ = pam.AlignedInclusions((0.01, 10))
 
@@ -100,7 +99,6 @@ def test_thomsen_calculator():
 
 
 def test_transverse_isotropic_stiffness():
-
     e_l = np.ones((5,))
     e_t = np.ones((5,))
     g_in = np.ones((5,))
