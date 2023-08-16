@@ -188,12 +188,12 @@ new tests if coverage is unchanged.
 
 #### style checks
 Code style is enforced with `pre-commit`. When you submit a pull request, the
-`pre-commit` bot will test whether your code passes the style requirements. If
-that test fails, you can have `pre-commit` autofix your pull request by adding
+`pre-commit.ci` bot will test whether your code passes the style requirements. If
+that test fails, you can have `pre-commit.ci` autofix your pull request by adding
 a comment to the pull request that reads
 
 ```
-pre-commit autofix
+pre-commit.ci autofix
 ```
 
 and the bot will try to fix the style failures. After it runs, if you still
