@@ -100,3 +100,9 @@ def test_some_errors():
     props = (0.5, 0.25)
     with pytest.raises(RuntimeError, match="proportions should sum to 1"):
         _ = materials.IsotropicMixture([m1, m2], props)
+
+    props = (0.25, 0.75)
+    m = materials.IsotropicMixture([m1, m2], props)
+
+    with pytest.raises(RuntimeError, match="unexpected shapes"):
+        _ = m._array_mult_and_sum(np.random.random((3,)), np.random.random((2, 3)))
