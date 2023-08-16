@@ -58,7 +58,6 @@ def test_load_isotropic_from_vbrc(file):
 
 @pytest.mark.parametrize("method", ("voigt", "reuss", "voigt-reuss"))
 def test_isotropic_mixture(method):
-
     m1 = materials.IsotropicMedium(0.25, 80 * 1e9, modulus_type="shear", density=3000)
     m2 = materials.IsotropicMedium(0.25, 50 * 1e9, modulus_type="shear", density=2000)
 

@@ -135,7 +135,6 @@ def load_isotropic_medium(
     shear_modulus_location: Tuple[str, ...],
     ifreq: Optional[int] = None,
 ) -> IsotropicMedium:
-
     """
     return an IsotropicMedium
 
@@ -178,7 +177,6 @@ class IsotropicMixture:
         materials: List[IsotropicMedium],
         proportions: ArrayLike,
     ):
-
         # references
         # for a nice summary of Watt et al., 1976:
         # Wang, F., Barklage, M., Lou, X., van der Lee, S., Bina, C. R., & Jacobsen, S. D.
@@ -209,7 +207,6 @@ class IsotropicMixture:
 
     @staticmethod
     def _array_mult_and_sum(x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
-
         if x1.shape == x2.shape:
             return np.sum(x1 * x2)
         elif x1.ndim > x2.ndim and x1.shape[0] == x2.shape[0]:
