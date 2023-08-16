@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -28,7 +28,11 @@ class IsotropicMedium:
     """
 
     def __init__(
-        self, poisson_ratio: float, modulus: float, modulus_type: str, density=None
+        self,
+        poisson_ratio: Union[float, ArrayLike],
+        modulus: Union[float, ArrayLike],
+        modulus_type: str,
+        density: Optional[Union[float, ArrayLike]] = None,
     ):
         self.poisson_ratio = poisson_ratio
 
@@ -124,6 +128,154 @@ class IsotropicMedium:
         density: scalar or array
         """
         self.density = density
+
+
+def load_isotropic_medium(
+    vbr_struct: VBRCstruct,
+    shear_modulus_location: Tuple[str, ...],
+    ifreq: Optional[int] = None,
+) -> IsotropicMedium:
+
+    """
+    return an IsotropicMedium
+
+    Parameters
+    ----------
+    shear_modulus_location: Tuple[str]
+            the output shear modulus of the VBRc structure to use. e.g,
+            ("elastic", "anharmonic", "Gu") or ("anelastic", "andrade_psp", "M")
+    ifreq: Optional[int]
+        the frequency index to select if the selected shear modulus is
+        frequency dependent.
+
+    Returns
+    -------
+
+    """
+
+    rho = vbr_struct.input.SV.rho
+
+    G = vbr_struct._get_nested_output_field(shear_modulus_location)
+    if G.ndim - rho.ndim == 1:
+        # frequency dependent!
+        if ifreq is None:
+            vbrloc = ".".join(shear_modulus_location)
+            raise ValueError(
+                f"{vbrloc} is frequency dependent, "
+                f"supply a frequency index using ifreq"
+            )
+        G = G[..., ifreq]
+
+    nu = vbr_struct.input.elastic.anharmonic.nu  # constant of length 1
+    nu = np.full(G.shape, nu)
+    m = IsotropicMedium(nu, G, modulus_type="shear", density=rho)
+    return m
+
+
+class IsotropicMixture:
+    def __init__(
+        self,
+        materials: List[IsotropicMedium],
+        proportions: ArrayLike,
+    ):
+
+        # references
+        # for a nice summary of Watt et al., 1976:
+        # Wang, F., Barklage, M., Lou, X., van der Lee, S., Bina, C. R., & Jacobsen, S. D.
+        # (2018). HyMaTZ: A Python program for modeling seismic velocities in hydrous
+        # regions of the mantle transition zone. Geochemistry, Geophysics, Geosystems,
+        # 19, 2308–2324. https://doi.org/10.1029/ 2018GC007464
+        #
+        # effective moduli calculations follow eqs 6-9 of Wang et al.
+
+        self.materials = materials
+        props = np.asarray(proportions)
+        if len(props) != len(materials):
+            raise RuntimeError(
+                "length of materials does not match length of proportions"
+            )
+
+        prop_sum = np.sum(props)
+        sums_to_1 = np.isclose(prop_sum, 1.0, atol=1e-10)
+        if not sums_to_1:
+            raise RuntimeError(f"proportions should sum to 1, found: {prop_sum}")
+        self.proportions = props
+
+    def _collect_material_values(self, material_attr: str) -> np.ndarray:
+        values = []
+        for medium in self.materials:
+            values.append(getattr(medium, material_attr))
+        return np.array(values)
+
+    @staticmethod
+    def _array_mult_and_sum(x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+
+        if x1.shape == x2.shape:
+            return np.sum(x1 * x2)
+        elif x1.ndim > x2.ndim and x1.shape[0] == x2.shape[0]:
+            ss = [None] * x1.ndim
+            ss[0] = slice(None)
+            x = x1 * x2[tuple(ss)]
+            return x.sum(axis=0)
+        else:
+            raise RuntimeError("unexpected shapes")
+
+    def density(self):
+        densities = self._collect_material_values("density")
+        return self._array_mult_and_sum(densities, self.proportions)
+
+    def _modulus(self, name, method):
+        method = method.replace("_", "-").lower()  # common errors
+        moduli = self._collect_material_values(name)
+
+        if method in ("voigt", "voigt-reuss"):
+            Mvoigt = self._array_mult_and_sum(moduli, self.proportions)
+            if method == "voigt":
+                return Mvoigt
+
+        Minv = self._array_mult_and_sum(1.0 / moduli, self.proportions)
+        M_reuss = 1.0 / Minv
+        if method == "reuss":
+            return M_reuss
+
+        # voigt-reuss
+        return (M_reuss + Mvoigt) / 2.0
+
+    def bulk_modulus(self, method: str = "voigt-reuss"):
+        """
+
+        Parameters
+        ----------
+        method: str
+            voigt, reuss or voigt-reuss (the default)
+
+        Returns
+        -------
+
+        """
+        return self._modulus("bulk_modulus", method)
+
+    def shear_modulus(self, method: str = "voigt-reuss"):
+        """
+        Parameters
+        ----------
+        method: str
+            voigt, reuss or voigt-reuss (the default)
+
+        Returns
+        -------
+        """
+        return self._modulus("shear_modulus", method)
+
+    def shear_velocity(self, method: str = "voigt-reuss"):
+        M = self.shear_modulus(method=method)
+        return np.sqrt(M / self.density())
+
+    def compressional_velocity(self, method: str = "voigt-reuss"):
+        K = self.bulk_modulus(method=method)
+        G = self.shear_modulus(method=method)
+        M = K + 4.0 * G / 3.0
+        return np.sqrt(M / self.density())
 
 
 class _AnisotropicMedium(ABC):
