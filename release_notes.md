@@ -1,8 +1,11 @@
-# v0.2.1
+# v0.3.0
+
+This release adds some isotropic volume averaging via the new `IsotropicMixture` class
 
 ## New Features
-
-## Bug Fixes
+- added `IsotropicMixture` class to do isotropic volume averaging, see examples.
 
 ## Other changes
+- `anistotropic` module renamed to `materials`
+
 
