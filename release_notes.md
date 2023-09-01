@@ -7,5 +7,6 @@ This release adds some isotropic volume averaging via the new `IsotropicMixture`
 
 ## Other changes
 - `anistotropic` module renamed to `materials`
+- switch to pre-commit.ci for linting
 
 
