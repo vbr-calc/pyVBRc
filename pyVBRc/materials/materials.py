@@ -5,7 +5,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 from unyt import unyt_array
 
-from pyVBRc.anisotropy._stiffness import TransverseIsotropicStiffness
+from pyVBRc.materials._stiffness import TransverseIsotropicStiffness
 from pyVBRc.vbrc_structure import VBRCstruct
 
 

@@ -3,7 +3,7 @@ import pytest
 from unyt import unyt_array, unyt_quantity
 
 import pyVBRc.sample_data as sd
-from pyVBRc.anisotropy import materials
+from pyVBRc.materials import materials
 
 
 def _get_offset_vbr_structs(file):

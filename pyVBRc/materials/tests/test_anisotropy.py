@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 from unyt import unyt_array, unyt_quantity
 
-import pyVBRc.anisotropy.materials as pam
+import pyVBRc.materials.materials as pam
 import pyVBRc.sample_data as sd
-from pyVBRc.anisotropy._stiffness import TransverseIsotropicStiffness
+from pyVBRc.materials._stiffness import TransverseIsotropicStiffness
 
 
 def test_aligned_inclusions():
