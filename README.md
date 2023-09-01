@@ -119,10 +119,10 @@ which yields
 
 **NOTE** that the validity of any interpolation will depend on the underlying VBR structure that you have built.
 
-### Anistropy
+### Isotropic Mixtures and Anistropy
 
-The `pyVBRc` includes some limited functionality for calculating anistropic properties. See the Examples for
-a description.
+The `pyVBRc` includes some limited functionality for calculating properties of Isotropic mixture as well as
+anistropic properties. See the Examples for a description.
 
 ### Examples
 
