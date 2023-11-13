@@ -1,12 +1,8 @@
-# v0.3.0
+# v0.3.1
 
-This release adds some isotropic volume averaging via the new `IsotropicMixture` class
+This bugfix release pins unyt < 3.0
 
-## New Features
-- added `IsotropicMixture` class to do isotropic volume averaging, see examples.
-
-## Other changes
-- `anistotropic` module renamed to `materials`
-- switch to pre-commit.ci for linting
+## bug fixes
+- unyt < 3.0
 
 
