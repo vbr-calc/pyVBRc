@@ -1,3 +1,8 @@
+[![PyPI](https://img.shields.io/pypi/v/pyVBRc.svg?color=green)](https://pypi.org/project/pyVBRc)
+[![Python Version](https://img.shields.io/pypi/pyversions/pyVBRc.svg?color=green)](https://python.org)
+[![codecov](https://codecov.io/gh/vbr-calc/pyVBRc/branch/main/graph/badge.svg)](https://codecov.io/gh/vbr-calc/pyVBRc)
+[![Tests](https://github.com/vbr-calc/pyVBRc/actions/workflows/build-test.yaml/badge.svg)](https://github.com/vbr-calc/pyVBRc/actions/workflows/build-test.yaml)
+
 # pyVBRc
 
 pyVBRc is a python package for working with output from the [Very Broadband Rheology Calculator](https://github.com/vbr-calc/vbr). pyVBRc is currently (very) experimental and is likely to change drastically between early versions, but feel free to use it.
