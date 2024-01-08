@@ -23,7 +23,5 @@ jobs:
       shell: bash
       run: |
         python -m pip install --no-build-isolation .
-    - name: Init submodules
-      uses: snickerbockers/submodules-init@v4
     - name: run check-manifest
       run: check-manifest -vvv
