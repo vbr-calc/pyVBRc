@@ -24,7 +24,7 @@ dependencies=["numpy",
               "scipy",
               "matplotlib",
               "packaging",
-              "unyt<3.0",
+              "unyt",
  ]
 
 [tool.setuptools]
