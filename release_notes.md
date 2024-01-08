@@ -1,8 +1,8 @@
-# v0.3.1
+# v0.3.2
 
-This bugfix release pins unyt < 3.0
+This bugfix release restores full unyt support
 
 ## bug fixes
-- unyt < 3.0
+- unyt no longer pinned to < 3.0
 
 

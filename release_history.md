@@ -1,3 +1,12 @@
+# v0.3.1
+
+This bugfix release pins unyt < 3.0
+
+## bug fixes
+- unyt < 3.0
+
+
+
 # v0.3.0
 
 This release adds some isotropic volume averaging via the new `IsotropicMixture` class
