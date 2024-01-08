@@ -48,10 +48,6 @@ def test_interpolator(fname):
     dg_targets = np.full(T_targets.shape, np.log10(dgval))
     if isinstance(T_targets, unyt_array):
         T_targets = T_targets.d
-    if isinstance(dg_targets, unyt_array):
-        dg_targets = dg_targets.d
-    if isinstance(phi_targets, unyt_array):
-        phi_targets = phi_targets.d
     targets = np.column_stack((T_targets, phi_targets, dg_targets))
     Vs_interp = interp(targets)
     assert len(Vs_interp) == nT * 2
