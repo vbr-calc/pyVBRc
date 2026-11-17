@@ -32,8 +32,8 @@ license-files = [
     "LICENSE",
 ]
 
-[tool.setuptools]
-packages = ["pyVBRc"]
+[tool.setuptools.packages.find]
+include = ["pyVBRc*"]
 
 [project.urls]
 "Homepage" = "https://github.com/vbr-calc/pyVBRc"
