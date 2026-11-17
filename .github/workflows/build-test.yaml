@@ -22,6 +22,6 @@ jobs:
       run: uv run pytest --cov=./ --cov-report=xml:coverage/coverage.xml -v pyVBRc/
     # https://github.com/marketplace/actions/codecov#example-workflowyml-with-codecov-action
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       with:
           directory: ./coverage/
