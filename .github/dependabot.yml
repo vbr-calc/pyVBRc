@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # Keep GitHub Actions workflows up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+  # Keep uv.lock up to date
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"

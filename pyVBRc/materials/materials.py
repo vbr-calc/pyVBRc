@@ -160,8 +160,7 @@ def load_isotropic_medium(
         if ifreq is None:
             vbrloc = ".".join(shear_modulus_location)
             raise ValueError(
-                f"{vbrloc} is frequency dependent, "
-                f"supply a frequency index using ifreq"
+                f"{vbrloc} is frequency dependent, supply a frequency index using ifreq"
             )
         G = G[..., ifreq]
 

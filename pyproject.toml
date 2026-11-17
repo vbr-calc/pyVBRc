@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,13 +10,11 @@ authors = [
 ]
 description="python utilities for working with the VBRc"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers=[
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,17 +27,35 @@ dependencies=["numpy",
               "packaging",
               "unyt",
  ]
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
 
-[tool.setuptools]
-packages = ["pyVBRc"]
+[tool.setuptools.packages.find]
+include = ["pyVBRc*"]
 
 [project.urls]
 "Homepage" = "https://github.com/vbr-calc/pyVBRc"
 "Bug Tracker" = "https://github.com/vbr-calc/pyVBRc/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=3",
     "pytest-cov",
     "pre-commit",
 ]
+
+[tool.check-manifest]
+ignore = ["uv.lock"]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["*.ipynb", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E266", "E501", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E", "F", "W"]
