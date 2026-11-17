@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyVBRc"
-version = "0.3.3"
+dynamic = ["version"]
 authors = [
   { name="Chris Havlin", email="chris.havlin@gmail.com" },
 ]
@@ -34,6 +34,9 @@ license-files = [
 
 [tool.setuptools.packages.find]
 include = ["pyVBRc*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyVBRc.__version__"}
 
 [project.urls]
 "Homepage" = "https://github.com/vbr-calc/pyVBRc"
