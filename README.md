@@ -15,8 +15,8 @@ To install the latest release:
 pip install pyVBRc
 ```
 
-To install the latest development version, see the section on
-[Contributing](#contributing).
+To install the latest development version, see the
+[Contributing Guidelines](CONTRIBUTING.md).
 
 ## Usage
 
@@ -142,4 +142,4 @@ If you have questions, feel free to ask in the VBRc slack channel (see [here](ht
 
 ## Getting involved
 
-Interested in extending `pyVBRc`? check out the [Contributing Guidelines][CONTRIBUTING.md]
+Interested in extending `pyVBRc`? check out the [Contributing Guidelines](CONTRIBUTING.md).

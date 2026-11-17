@@ -6,7 +6,7 @@ First-time contributors should refrain from using generative AI without prior di
 
 ### Getting started
 
-Contributions fall a fork-pull request open source work flow:
+Contributions follow a fork-pull request open source work flow:
 
 1. Fork this repository
 2. Clone your fork and build a development installation (see below)
@@ -21,17 +21,35 @@ if you're new to git!
 
 ### Development installation
 
-After cloning your fork, you can install `pyVBRc` with
+`pyVBRc` is a [uv](https://docs.astral.sh/uv/)-managed project. After
+[installing uv](https://docs.astral.sh/uv/getting-started/installation/) and
+cloning your fork, run
 
 ```shell
-pip install -e .[dev]
+uv sync
 ```
 
-and then install all the development requirements with
+from the top level of the repository. This creates a virtual environment in
+`.venv` containing an editable install of `pyVBRc` along with the development
+requirements (the `dev` dependency group in `pyproject.toml`), using the
+versions pinned in `uv.lock`.
+
+You can then either prefix commands with `uv run` (as in the examples below) or
+activate the environment with `source .venv/bin/activate` and run commands
+directly.
+
+If you'd rather not use uv, any recent `pip` (>= 25.1) can build an equivalent
+environment:
 
 ```shell
-pip install -r requirements_dev.txt
+pip install -e . --group dev
 ```
+
+#### changing dependencies
+
+Use `uv add <package>` (or `uv add --dev <package>` for a development-only
+requirement) rather than editing `pyproject.toml` by hand so that `uv.lock` is
+updated at the same time, and commit the updated `uv.lock` with your change.
 
 ### running the test suite
 
@@ -39,12 +57,12 @@ After completing your development installation, you can run the test suite
 with
 
 ```shell
-pytest -v
+uv run pytest -v
 ```
 To also generate a code coverage report
 
 ```shell
-pytest -v --cov=./ --cov-report=html:coverage/
+uv run pytest -v --cov=./ --cov-report=html:coverage/
 ```
 After tests run, you can then open the `coverage/index.html` file in your
 preferred browser and check out where test coverage is poor.
@@ -82,7 +100,7 @@ building your development installation, you can initialize pre-commit within
 your repository with
 
 ```shell
-pre-commit install
+uv run pre-commit install
 ```
 
 and your code changes will be checked every time you commit.

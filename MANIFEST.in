@@ -19,3 +19,4 @@ include examples *.ipynb
 recursive-exclude examples .ipynb_checkpoints *
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+prune .venv

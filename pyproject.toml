@@ -39,12 +39,15 @@ include = ["pyVBRc*"]
 "Homepage" = "https://github.com/vbr-calc/pyVBRc"
 "Bug Tracker" = "https://github.com/vbr-calc/pyVBRc/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=3",
     "pytest-cov",
     "pre-commit",
 ]
+
+[tool.check-manifest]
+ignore = ["uv.lock"]
 
 [tool.ruff]
 line-length = 88
