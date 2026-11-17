@@ -6,7 +6,6 @@ include .coveragerc
 include .editorconfig
 include *.sh
 include *.txt
-include Makefile
 
 recursive-include * *.m
 recursive-include pyVBRc *.mat
