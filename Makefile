@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8 lint/black
+.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/ruff lint/format
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -47,12 +47,12 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint/flake8: ## check style with flake8
-	flake8 pyVBRc tests
-lint/black: ## check style with black
-	black --check pyVBRc tests
+lint/ruff: ## check style with ruff
+	ruff check pyVBRc
+lint/format: ## check formatting with ruff
+	ruff format --check pyVBRc
 
-lint: lint/flake8 lint/black ## check style
+lint: lint/ruff lint/format ## check style
 
 test: ## run tests quickly with the default Python
 	pytest

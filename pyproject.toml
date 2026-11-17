@@ -45,3 +45,14 @@ dev = [
     "pytest-cov",
     "pre-commit",
 ]
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["*.ipynb", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E266", "E501", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E", "F", "W"]

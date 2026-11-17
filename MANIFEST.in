@@ -5,7 +5,6 @@ recursive-include . *.yaml
 include .coveragerc
 include .editorconfig
 include *.sh
-exclude .flake8
 include *.txt
 include Makefile
 
